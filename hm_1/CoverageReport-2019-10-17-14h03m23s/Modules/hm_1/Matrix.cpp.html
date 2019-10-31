@@ -1,0 +1,364 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>Matrix.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+#include "Matrix.h"
+#include "Vector.h"
+
+
+namespace mat_vec {
+<span style = "background-color:#dfd">	Matrix::Matrix(size_t size, double value): Matrix(size, size, value){}</span>
+	
+	// ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ ÐµÐ´Ð¸Ð½Ð¸ÑÐ½ÑÑ Ð¼Ð°ÑÑÐ¸ÑÑ
+<span style = "background-color:#dfd">	Matrix Matrix::eye(size_t size){
+		Matrix t(size);
+		for (size_t i = 0; i &lt; size; i++)
+			t[i][i] = 1;</span>
+
+<span style = "background-color:#dfd">		return t;
+	};</span>
+
+	// ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ Ð¼Ð°ÑÑÐ¸ÑÑ Ñ ÑÐ°Ð·Ð¼ÐµÑÐ°Ð¼Ð¸ rows x cols, Ð·Ð°Ð¿Ð¾Ð»Ð½ÐµÐ½Ð½ÑÑ value
+<span style = "background-color:#dfd">	Matrix::Matrix(size_t rows, size_t cols, double value){
+		size_ = {rows, cols};
+		matrix = new double* [size_.first];</span>
+
+<span style = "background-color:#dfd">		for (size_t i = 0; i &lt; size_.first; i++){
+			matrix[i] = new double[size_.second];
+			for (size_t j = 0; j &lt; size_.second; j++)
+				matrix[i][j] = value;
+		}
+	}</span>
+
+	// ÐÐ¾Ð½ÑÑÑÑÐºÑÐ¾Ñ ÐºÐ¾Ð¿Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ñ
+<span style = "background-color:#dfd">	Matrix::Matrix(const Matrix &amp;src){
+		size_ = src.shape();</span>
+		
+<span style = "background-color:#dfd">		matrix = new double* [size_.first];
+		for (size_t i = 0; i &lt; size_.first; i++){
+			matrix[i] = new double[size_.second];</span>
+
+<span style = "background-color:#dfd">			for (size_t j = 0; j &lt; size_.second; j++)
+				matrix[i][j] = src[i][j];
+		}
+	}</span>
+
+	// ÐÐ¿ÐµÑÐ°ÑÐ¾Ñ Ð¿ÑÐ¸ÑÐ²Ð°Ð¸Ð²Ð°Ð½Ð¸Ñ
+<span style = "background-color:#dfd">	Matrix &amp;Matrix::operator=(const Matrix &amp;rhs){
+		for (size_t i = 0; i &lt; size_.first; i++)
+			delete[] matrix[i];
+		delete[] matrix;</span>
+
+<span style = "background-color:#dfd">		size_ = rhs.shape();
+		matrix = new double* [size_.first];
+		for (size_t i = 0; i &lt; size_.first; i++){
+			matrix[i] = new double[size_.second];</span>
+
+<span style = "background-color:#dfd">			for (size_t j = 0; j &lt; size_.second; j++)
+				matrix[i][j] = rhs[i][j];
+		}</span>
+
+<span style = "background-color:#dfd">		return *this;
+	}</span>
+
+	// ÐÐµÑÑÑÑÐºÑÐ¾Ñ
+<span style = "background-color:#dfd">	Matrix::~Matrix(){
+		for (size_t i = 0; i &lt; size_.first; i++)
+			delete[] matrix[i];
+		delete[] matrix;
+	};</span>
+
+	// ÐÐ·Ð¼ÐµÐ½ÑÐµÑ ÑÐ¸ÑÐ¸Ð½Ñ Ð¸ Ð²ÑÑÐ¾ÑÑ Ð¼Ð°ÑÑÐ¸ÑÑ, Ð½Ðµ Ð¸Ð·Ð¼ÐµÐ½ÑÑ Ð¿ÑÐ¸ ÑÑÐ¾Ð¼
+	// Ð¿Ð¾ÑÑÐ´Ð¾Ðº ÑÐ»ÐµÐ´Ð¾Ð²Ð°Ð½Ð¸Ñ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð¾Ñ Ð»ÐµÐ²Ð¾Ð³Ð¾ Ð²ÐµÑÑÐ½ÐµÐ³Ð¾ Ðº Ð¿ÑÐ°Ð²Ð¾Ð¼Ñ Ð½Ð¸Ð¶Ð½ÐµÐ¼Ñ:
+	//
+	// [1 2 3] -&gt; [1 2]
+	// [4 5 6] -&gt; [3 4]
+	//            [5 6]
+<span style = "background-color:#dfd">	void Matrix::reshape(size_t rows, size_t cols){
+		Matrix t(rows, cols, 0);
+		size_t i1 = 0;
+		size_t j1 = 0;</span>
+
+<span style = "background-color:#dfd">		for (size_t i = 0; i &lt; rows; i++){
+			for (size_t j = 0; j &lt; cols; j++){
+				t[i][j] = matrix[i1][j1];
+				j1 = (j1 + 1) % size_.second;
+				if (j1 == 0)
+					i1++;
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		*this = t;
+	}</span>
+
+	// ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ Ð¿Ð°ÑÑ {rows, cols} -- ÐºÐ¾Ð»Ð¸ÑÐµÑÑÐ²Ð¾ ÑÑÑÐ¾Ðº Ð¸ ÑÑÐ¾Ð»Ð±ÑÐ¾Ð² Ð¼Ð°ÑÑÐ¸ÑÑ
+<span style = "background-color:#dfd">	std::pair&lt;size_t, size_t&gt; Matrix::shape() const{
+		return size_;
+	}</span>
+
+	// ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½Ñ Ð½Ð° Ð¿Ð¾Ð·Ð¸ÑÐ¸Ð¸ [row, col]
+<span style = "background-color:#dfd">	double Matrix::get(size_t row, size_t col) const{
+		return matrix[row][col];
+	}</span>
+
+<span style = "background-color:#dfd">	double* Matrix::operator[](size_t n){
+		return matrix[n];
+	}</span>
+
+<span style = "background-color:#dfd">	double* Matrix::operator[](size_t n) const{
+		return matrix[n];
+	}</span>
+
+	// ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÐ»Ð¾Ð¶ÐµÐ½Ð¸Ðµ
+<span style = "background-color:#dfd">	Matrix Matrix::operator+(const Matrix &amp;rhs) const{
+		Matrix t(*this);
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				t[i][j] += rhs[i][j];
+			}
+		}</span>
+		
+<span style = "background-color:#dfd">		return t;
+	}</span>
+
+<span style = "background-color:#dfd">	Matrix &amp;Matrix::operator+=(const Matrix &amp;rhs){
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				matrix[i][j] += rhs[i][j];
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		return *this;
+	}</span>
+
+	// ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ Ð²ÑÑÐ¸ÑÐ°Ð½Ð¸Ðµ
+<span style = "background-color:#dfd">	Matrix Matrix::operator-(const Matrix &amp;rhs) const{
+		Matrix t(*this);
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				t[i][j] -= rhs[i][j];
+			}
+		}</span>
+		
+<span style = "background-color:#dfd">		return t;
+	}
+	Matrix &amp;Matrix::operator-=(const Matrix &amp;rhs){
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				matrix[i][j] -= rhs[i][j];
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		return *this;
+	}</span>
+
+	// ÐÐ°ÑÑÐ¸ÑÐ½Ð¾Ðµ ÑÐ¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ
+<span style = "background-color:#dfd">	Matrix Matrix::operator*(const Matrix &amp;rhs) const{
+		Matrix t(size_.first, rhs.size_.second, 0);</span>
+		
+<span style = "background-color:#dfd">		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; rhs.size_.second; j++){
+				double res = 0;
+				for (size_t k = 0; k &lt; size_.second; k++)
+					res += matrix[i][k] * rhs[k][j];
+				t[i][j] = res;
+			}
+		}</span>
+		
+<span style = "background-color:#dfd">		return t;
+	}</span>
+
+<span style = "background-color:#dfd">	Matrix &amp;Matrix::operator*=(const Matrix &amp;rhs){
+		return *this = *this * rhs;
+	}</span>
+
+	// Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð¼Ð°ÑÑÐ¸ÑÑ Ð½Ð° ÐºÐ¾Ð½ÑÑÐ°Ð½ÑÑ
+<span style = "background-color:#dfd">	Matrix Matrix::operator*(double k) const{
+		Matrix t(*this);
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				t[i][j] *= k;
+			}
+		}</span>
+		
+<span style = "background-color:#dfd">		return t;
+	}
+	Matrix &amp;Matrix::operator*=(double k){
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				matrix[i][j] *= k;
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		return *this;
+	}</span>
+
+	// ÐÐµÐ»ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð¼Ð°ÑÑÐ¸ÑÑ Ð½Ð° ÐºÐ¾Ð½ÑÑÐ°Ð½ÑÑ
+<span style = "background-color:#dfd">	Matrix Matrix::operator/(double k) const{
+		Matrix t(*this);
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				t[i][j] /= k;
+			}
+		}</span>
+		
+<span style = "background-color:#dfd">		return t;
+	}
+	Matrix &amp;Matrix::operator/=(double k){
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				matrix[i][j] /= k;
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		return *this;
+	}</span>
+	// ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ Ð½Ð¾Ð²ÑÑ Ð¼Ð°ÑÑÐ¸ÑÑ, Ð¿Ð¾Ð»ÑÑÐµÐ½Ð½ÑÑ ÑÑÐ°Ð½ÑÐ¿Ð¾Ð½Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸ÐµÐ¼ ÑÐµÐºÑÑÐµÐ¹ (this)
+<span style = "background-color:#dfd">	Matrix Matrix::transposed() const{
+		Matrix t(size_.second, size_.first, 0);</span>
+
+<span style = "background-color:#dfd">		for(size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++){
+				t[j][i] = matrix[i][j];
+			}
+		}</span>
+
+<span style = "background-color:#dfd">		return t;
+	}</span>
+
+	// Ð¢ÑÐ°Ð½ÑÐ¿Ð¾Ð½Ð¸ÑÑÐµÑ ÑÐµÐºÑÑÑÑ Ð¼Ð°ÑÑÐ¸ÑÑ
+<span style = "background-color:#dfd">	void Matrix::transpose(){
+		if (size_.first == size_.second){
+			for (size_t i = 0; i &lt; size_.first; i++)
+				for (size_t j = i; j &lt; size_.second; j++)
+					std::swap(matrix[i][j], matrix[j][i]);
+		}</span>
+		else{
+<span style = "background-color:#dfd">			*this = (*this).transposed();</span>
+		}
+<span style = "background-color:#dfd">	}</span>
+
+	// ÐÐ¿ÑÐµÐ´ÐµÐ»Ð¸ÑÐµÐ»Ñ
+<span style = "background-color:#dfd">	double Matrix::determinant(mat_vec::Matrix mat, size_t size){ 
+		double det = 0;
+		mat_vec::Matrix t_mat(size, 0);</span>
+
+<span style = "background-color:#dfd">		if (size == 1)
+			return mat[0][0];
+		if (size == 2)
+			return (mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1]);</span>
+
+<span style = "background-color:#dfd">		for (size_t k = 0; k &lt; size; k++) {
+			t_mat = mat.Ñofactor(0, k);
+			det += (pow(-1, k) * mat[0][k] * determinant(t_mat, size - 1));
+		}</span>
+		
+<span style = "background-color:#dfd">		return det;
+	}</span>
+
+<span style = "background-color:#dfd">	double Matrix::det() const{
+		return determinant(*this, size_.first);
+	}</span>
+	// ÐÐ±ÑÐ°ÑÐ½Ð°Ñ Ð¼Ð°ÑÑÐ¸ÑÐ°
+<span style = "background-color:#dfd">	Matrix Matrix::inv() const{
+		return Matrix(adjoint() / det());
+	}</span>
+
+<span style = "background-color:#dfd">	Matrix Matrix::adjoint() const{
+		size_t size = size_.first;</span>
+		
+<span style = "background-color:#dfd">		Matrix adj(size), temp(size);</span>
+	    
+<span style = "background-color:#dfd">		if (size == 1) { 
+	        adj[0][0] = 1; 
+	        return adj; </span>
+	    }
+	  
+<span style = "background-color:#dfd">	    for (size_t i = 0; i &lt; size; i++) { 
+	        for (size_t j = 0; j &lt; size; j++){ 
+	            temp = Ñofactor(i, j);</span>
+
+<span style = "background-color:#dfd">	            adj[j][i] = pow(-1, i + j) * determinant(temp, size - 1); 
+	        } 
+	    } 
+		return adj;
+	} </span>
+		
+<span style = "background-color:#dfd">	Matrix Matrix::Ñofactor(size_t p, size_t q) const{
+		size_t size = size_.first;</span>
+
+<span style = "background-color:#dfd">		Matrix temp(size);
+		size_t i = 0, j = 0;</span>
+
+		// Looping for each element of the matrix 
+<span style = "background-color:#dfd">		for (size_t row = 0; row &lt; size; row++){
+			if (row == p) continue;
+			for (size_t col = 0; col &lt; size; col++){
+				if (col == q) continue;</span>
+
+<span style = "background-color:#dfd">				temp[i][j++] = matrix[row][col]; 					
+				if (j == size - 1){
+					j = 0;
+					i++;</span>
+				}
+<span style = "background-color:#dfd">			}
+		}</span>
+
+<span style = "background-color:#dfd">		return temp;
+	}</span>
+		
+	  
+	// Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð¼Ð°ÑÑÐ¸ÑÑ Ð½Ð° Ð²ÐµÐºÑÐ¾Ñ
+<span style = "background-color:#dfd">	Vector Matrix::operator*(const Vector &amp;vec) const{
+		Vector t(size_.first);</span>
+
+<span style = "background-color:#dfd">		for (size_t i = 0; i &lt; size_.first; i++){
+			double res = 0;</span>
+
+<span style = "background-color:#dfd">			for (size_t j = 0; j &lt; vec.size(); j++){
+				res += matrix[i][j] * vec[j];
+			}
+			t[i] = res;
+		}</span>
+
+<span style = "background-color:#dfd">		return t;
+	}</span>
+
+	// ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÑÐ°Ð²Ð½ÐµÐ½Ð¸Ðµ
+<span style = "background-color:#dfd">	bool Matrix::operator==(const Matrix &amp;rhs) const{
+		if (size_ != rhs.shape()) 
+			return false;</span>
+	
+<span style = "background-color:#dfd">		for (size_t i = 0; i &lt; size_.first; i++)
+			for (size_t j = 0; j &lt; size_.second; j++)
+				if (abs(matrix[i][j] - rhs[i][j]) &gt; EPS)
+					return false;</span>
+		
+<span style = "background-color:#dfd">		return true;
+	}</span>
+
+<span style = "background-color:#dfd">	bool Matrix::operator!=(const Matrix &amp;rhs) const{
+		return !(*this == rhs);
+	}</span>
+
+<span style = "background-color:#dfd">	void Matrix::print(){
+		std::cout &lt;&lt; "Size: " &lt;&lt; size_.first &lt;&lt; " x " &lt;&lt; size_.second &lt;&lt; "\n"; 
+		for (size_t i = 0; i &lt; size_.first; i++){
+			for (size_t j = 0; j &lt; size_.second; j++)
+				std::cout &lt;&lt; matrix[i][j] &lt;&lt; " ";
+			std::cout &lt;&lt; "\n";
+		}</span>
+		
+<span style = "background-color:#dfd">		std::cout &lt;&lt; '\n';
+	}</span>
+};
+ // namespace mat_vec</pre>
+	</body>
+</html>

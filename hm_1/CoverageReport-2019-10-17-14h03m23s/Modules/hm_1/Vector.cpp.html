@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>Vector.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+#include "Vector.h"
+#include "Matrix.h"
+
+namespace mat_vec {
+
+    // Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐ¸ÑÐ»Ð¾ ÑÐ»ÐµÐ²Ð° (k * v)
+<span style = "background-color:#dfd">    Vector operator*(double k, const Vector &amp;v){
+        Vector t(v);
+        for (size_t i = 0; i &lt; v.size(); i++)
+            t[i] *= k;
+        return t;
+    };</span>
+
+    // ÐÐ¾Ð½ÑÑÑÑÐ¸ÑÑÐµÑ Ð²ÐµÐºÑÐ¾Ñ ÑÐ°Ð·Ð¼ÐµÑÐ° size ÑÐ¾ Ð·Ð½Ð°ÑÐµÐ½Ð¸ÑÐ¼Ð¸ value
+<span style = "background-color:#dfd">    Vector::Vector(size_t size, double value){
+        size_ = size;
+        array = new double[size_];
+        for (size_t i = 0; i &lt; size_; i++)
+            array[i] = value;
+    };</span>
+    
+    // ÐÐ¾Ð½ÑÑÑÑÐºÑÐ¾Ñ ÐºÐ¾Ð¿Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ñ
+<span style = "background-color:#dfd">    Vector::Vector(const Vector &amp;src){
+        size_ = src.size();
+        array = new double[size_];
+        for (size_t i = 0; i &lt; size_; i++)
+            array[i] = src.array[i];
+    };</span>
+    
+    // ÐÐ¿ÐµÑÐ°ÑÐ¾Ñ Ð¿ÑÐ¸ÑÐ²Ð°Ð¸Ð²Ð°Ð½Ð¸Ñ
+<span style = "background-color:#dfd">    Vector &amp;Vector::operator=(const Vector &amp;rhs){
+        delete[] array;</span>
+
+<span style = "background-color:#dfd">        size_ = rhs.size();
+        array = new double[size_];        
+        for (size_t i = 0; i &lt; size_; i++)
+            array[i] = rhs[i];</span>
+        
+<span style = "background-color:#dfd">        return *this;
+    };</span>
+    
+    // ÐÐµÑÑÑÑÐºÑÐ¾Ñ
+<span style = "background-color:#dfd">    Vector::~Vector(){
+        delete[] array;
+    };</span>
+
+    // ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ ÑÐ°Ð·Ð¼ÐµÑ Ð²ÐµÐºÑÐ¾ÑÐ°
+<span style = "background-color:#dfd">    size_t Vector::size() const{
+        return size_;
+    };</span>
+    
+    // ÐÐ¾ÑÑÑÐ¿ Ðº n-Ð¼Ñ ÑÐ»ÐµÐ¼ÐµÐ½ÑÑ Ð²ÐµÐºÑÐ¾ÑÐ°
+<span style = "background-color:#dfd">    double Vector::operator[](size_t n) const{
+        return array[n];
+    };</span>
+
+<span style = "background-color:#dfd">    double&amp; Vector::operator[](size_t n){
+        return array[n];
+    };</span>
+
+    // L2 Ð½Ð¾ÑÐ¼Ð° Ð²ÐµÐºÑÐ¾ÑÐ°
+<span style = "background-color:#dfd">    double Vector::norm() const{
+        double res = 0;
+        for (size_t i = 0; i &lt; size_; i++){
+            res += array[i] * array[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return std::sqrt(res);
+    };</span>
+    
+    // ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ Ð½Ð¾Ð²ÑÐ¹ Ð²ÐµÐºÑÐ¾Ñ, Ð¿Ð¾Ð»ÑÑÐµÐ½Ð½ÑÐ¹ Ð½Ð¾ÑÐ¼Ð°Ð»Ð¸Ð·Ð°ÑÐ¸ÐµÐ¹ ÑÐµÐºÑÑÐµÐ³Ð¾ (this)
+<span style = "background-color:#dfd">    Vector Vector::normalized() const{
+        double nrm = norm();
+        Vector vector(*this);</span>
+
+<span style = "background-color:#dfd">        for (size_t i = 0; i &lt; size_; i++){
+            vector[i] /= nrm;
+        }</span>
+
+<span style = "background-color:#dfd">        return vector;
+    };</span>
+    
+    // ÐÐ¾ÑÐ¼Ð°Ð»Ð¸Ð·ÑÐµÑ ÑÐµÐºÑÑÐ¸Ð¹ Ð²ÐµÐºÑÐ¾Ñ
+<span style = "background-color:#dfd">    void Vector::normalize(){
+        double nrm = norm();</span>
+
+<span style = "background-color:#dfd">        for (size_t i = 0; i &lt; size_; i++){
+            array[i] /= nrm;
+        }
+    };</span>
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÐ»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+<span style = "background-color:#dfd">    Vector Vector::operator+(const Vector &amp;rhs) const{
+        Vector tmp(*this);
+        for (size_t i = 0; i &lt; size_; i++){
+            tmp[i] += rhs[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return tmp;
+    };</span>
+
+<span style = "background-color:#dfd">    Vector&amp; Vector::operator+=(const Vector &amp;rhs){
+        for (size_t i = 0; i &lt; size_; i++){
+            array[i] += rhs[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return *this;
+    }</span>
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ Ð²ÑÑÐ¸ÑÐ°Ð½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+<span style = "background-color:#dfd">    Vector Vector::operator-(const Vector &amp;rhs) const{
+        Vector tmp(*this);
+        for (size_t i = 0; i &lt; size_; i++){
+            tmp[i] -= rhs[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return tmp;
+    }
+    Vector&amp; Vector::operator-=(const Vector &amp;rhs){
+        for (size_t i = 0; i &lt; size_; i++){
+            array[i] -= rhs[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return *this;
+    }</span>
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÐ¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+<span style = "background-color:#dfd">    Vector Vector::operator^(const Vector &amp;rhs) const{
+        Vector tmp(*this);
+        for (size_t i = 0; i &lt; size_; i++){
+            tmp[i] *= rhs[i];
+        }</span>
+
+<span style = "background-color:#dfd">        return tmp;
+    }</span>
+
+<span style = "background-color:#dfd">    Vector&amp; Vector::operator^=(const Vector &amp;rhs){
+        for (size_t i = 0; i &lt; size_; i++){
+            array[i] *= rhs[i];
+        }
+        return *this;
+    }</span>
+
+    // Ð¡ÐºÐ°Ð»ÑÑÐ½Ð¾Ðµ Ð¿ÑÐ¾Ð¸Ð·Ð²ÐµÐ´ÐµÐ½Ð¸Ðµ
+<span style = "background-color:#dfd">    double Vector::operator*(const Vector &amp;rhs) const{
+        double res = 0;
+        for (size_t i = 0; i &lt; size_; i++)
+            res += rhs[i] * array[i];
+        return res;
+    }</span>
+
+    // Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐºÐ°Ð»ÑÑ ÑÐ¿ÑÐ°Ð²Ð° (v * k)
+<span style = "background-color:#dfd">    Vector Vector::operator*(double k) const{
+        Vector tmp(*this);
+        for (size_t i = 0; i &lt; size_; i++){
+            tmp[i] *= k;
+        }</span>
+
+<span style = "background-color:#dfd">        return tmp;
+    }</span>
+
+<span style = "background-color:#dfd">    Vector&amp; Vector::operator*=(double k){
+        for (size_t i = 0; i &lt; size_; i++)
+            array[i] *= k;</span>
+
+<span style = "background-color:#dfd">        return *this;
+    };</span>
+
+    // ÐÐµÐ»ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐºÐ°Ð»ÑÑ
+<span style = "background-color:#dfd">    Vector Vector::operator/(double k) const{
+        Vector tmp(*this);
+        for (size_t i = 0; i &lt; size_; i++){
+            tmp[i] /= k;
+        }</span>
+
+<span style = "background-color:#dfd">        return tmp;
+    }
+    Vector&amp; Vector::operator/=(double k){
+        for (size_t i = 0; i &lt; size_; i++)
+            array[i] /= k;</span>
+
+<span style = "background-color:#dfd">        return *this;
+    }</span>
+
+    // Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° Ð¼Ð°ÑÑÐ¸ÑÑ
+<span style = "background-color:#dfd">    Vector Vector::operator*(const Matrix &amp;mat) const{
+        Vector t(mat.shape().second);     
+        for (size_t i = 0; i &lt; mat.shape().second; i++){
+            double res = 0;</span>
+            
+<span style = "background-color:#dfd">            for (size_t j = 0; j &lt; size_; j++){
+                res += array[j] * mat[j][i];
+            }
+            t[i] = res;
+        }</span>
+
+<span style = "background-color:#dfd">        return t;
+    }</span>
+
+<span style = "background-color:#dfd">    Vector&amp; Vector::operator*=(const Matrix &amp;mat){
+        return *this = *this * mat;
+    }</span>
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÑÐ°Ð²Ð½ÐµÐ½Ð¸Ðµ
+<span style = "background-color:#dfd">    bool Vector::operator==(const Vector &amp;rhs) const{
+        if (rhs.size() != size_) return false;</span>
+
+<span style = "background-color:#dfd">        for (size_t i = 0; i &lt; size_; i++)
+            if (abs(rhs[i] - array[i]) &gt; EPS)
+                return false;</span>
+        
+<span style = "background-color:#dfd">        return true;
+    }</span>
+
+<span style = "background-color:#dfd">    bool Vector::operator!=(const Vector &amp;rhs) const{
+        return !(rhs == *this);
+    }</span>
+
+<span style = "background-color:#dfd">    void Vector::print(){
+        std::cout &lt;&lt; "Size: " &lt;&lt; size_ &lt;&lt; '\n' &lt;&lt; "{ ";
+        for (size_t i = 0; i &lt; size_; i++){
+            std::cout &lt;&lt; array[i] &lt;&lt; " ";
+        }
+        std::cout &lt;&lt; "}\n\n";
+    }</span>
+
+}; // namespace mat_vec</pre>
+	</body>
+</html>

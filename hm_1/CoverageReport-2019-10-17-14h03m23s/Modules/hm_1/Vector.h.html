@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>Vector.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+#pragma once
+
+#include "Base.h"
+
+namespace mat_vec {
+
+// Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐ¸ÑÐ»Ð¾ ÑÐ»ÐµÐ²Ð° (k * v)
+Vector operator*(double k, const Vector &amp;v);
+
+class Vector {
+    private:
+<span style = "background-color:#dfd">        size_t size_ = 0;</span>
+        double *array;
+    public:
+    // ÐÐ¾Ð½ÑÑÑÑÐ¸ÑÑÐµÑ Ð²ÐµÐºÑÐ¾Ñ ÑÐ°Ð·Ð¼ÐµÑÐ° size ÑÐ¾ Ð·Ð½Ð°ÑÐµÐ½Ð¸ÑÐ¼Ð¸ value
+    explicit Vector(size_t size, double value = 0);
+    
+    // ÐÐ¾Ð½ÑÑÑÑÐºÑÐ¾Ñ ÐºÐ¾Ð¿Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ñ
+    Vector(const Vector &amp;src);
+    
+    // ÐÐ¿ÐµÑÐ°ÑÐ¾Ñ Ð¿ÑÐ¸ÑÐ²Ð°Ð¸Ð²Ð°Ð½Ð¸Ñ
+    Vector &amp;operator=(const Vector &amp;rhs);
+    
+    // ÐÐµÑÑÑÑÐºÑÐ¾Ñ
+    ~Vector();
+
+    // ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ ÑÐ°Ð·Ð¼ÐµÑ Ð²ÐµÐºÑÐ¾ÑÐ°
+    size_t size() const;
+    
+    // ÐÐ¾ÑÑÑÐ¿ Ðº n-Ð¼Ñ ÑÐ»ÐµÐ¼ÐµÐ½ÑÑ Ð²ÐµÐºÑÐ¾ÑÐ°
+    double operator[](size_t n) const;
+    double &amp;operator[](size_t n);
+
+    // L2 Ð½Ð¾ÑÐ¼Ð° Ð²ÐµÐºÑÐ¾ÑÐ°
+    double norm() const;
+    
+    // ÐÐ¾Ð·Ð²ÑÐ°ÑÐ°ÐµÑ Ð½Ð¾Ð²ÑÐ¹ Ð²ÐµÐºÑÐ¾Ñ, Ð¿Ð¾Ð»ÑÑÐµÐ½Ð½ÑÐ¹ Ð½Ð¾ÑÐ¼Ð°Ð»Ð¸Ð·Ð°ÑÐ¸ÐµÐ¹ ÑÐµÐºÑÑÐµÐ³Ð¾ (this)
+    Vector normalized() const;
+    
+    // ÐÐ¾ÑÐ¼Ð°Ð»Ð¸Ð·ÑÐµÑ ÑÐµÐºÑÑÐ¸Ð¹ Ð²ÐµÐºÑÐ¾Ñ
+    void normalize();
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÐ»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+    Vector operator+(const Vector &amp;rhs) const;
+    Vector &amp;operator+=(const Vector &amp;rhs);
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ Ð²ÑÑÐ¸ÑÐ°Ð½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+    Vector operator-(const Vector &amp;rhs) const;
+    Vector &amp;operator-=(const Vector &amp;rhs);
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÐ¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ¾Ð²
+    Vector operator^(const Vector &amp;rhs) const;
+    Vector &amp;operator^=(const Vector &amp;rhs);
+
+    // Ð¡ÐºÐ°Ð»ÑÑÐ½Ð¾Ðµ Ð¿ÑÐ¾Ð¸Ð·Ð²ÐµÐ´ÐµÐ½Ð¸Ðµ
+    double operator*(const Vector &amp;rhs) const;
+
+    // Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐºÐ°Ð»ÑÑ ÑÐ¿ÑÐ°Ð²Ð° (v * k)
+    Vector operator*(double k) const;
+    Vector &amp;operator*=(double k);
+
+    // ÐÐµÐ»ÐµÐ½Ð¸Ðµ Ð²ÑÐµÑ ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ¾Ð² Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° ÑÐºÐ°Ð»ÑÑ
+    Vector operator/(double k) const;
+    Vector &amp;operator/=(double k);
+
+    // Ð£Ð¼Ð½Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð²ÐµÐºÑÐ¾ÑÐ° Ð½Ð° Ð¼Ð°ÑÑÐ¸ÑÑ
+    Vector operator*(const Matrix &amp;mat) const;
+    Vector &amp;operator*=(const Matrix &amp;mat);
+
+    // ÐÐ¾ÑÐ»ÐµÐ¼ÐµÐ½ÑÐ½Ð¾Ðµ ÑÑÐ°Ð²Ð½ÐµÐ½Ð¸Ðµ
+    bool operator==(const Vector &amp;rhs) const;
+    bool operator!=(const Vector &amp;rhs) const;
+
+    void print();
+    };
+} // namespace mat_vec</pre>
+	</body>
+</html>
