@@ -6,6 +6,14 @@
 #include <type_traits>
 #include <vector>
 
+
+/*
+   
+    —равнение в итераторах и в конст итераторе( ак получить ссылку с итератора?)
+    Friend конструктор дл€ итераторов
+    »нкремент/декремент в конст итераторе
+
+*/
 namespace fefu
 {
 
@@ -47,19 +55,40 @@ namespace fefu
         using reference = ValueType&;
         using pointer = ValueType*;
 
-        hash_map_iterator() noexcept;
-        hash_map_iterator(const hash_map_iterator& other) noexcept;
+        hash_map_iterator() noexcept = default;
+        hash_map_iterator(const hash_map_iterator& other) noexcept : p(other.p) {}
+        hash_map_iterator(const pointer p_) noexcept : p(p_) {}
 
-        reference operator*() const;
-        pointer operator->() const;
+        reference operator*() const {
+            return *p;
+        }
+        pointer operator->() const {
+            return p;
+        }
 
         // prefix ++
-        hash_map_iterator& operator++();
+        hash_map_iterator& operator++() {
+            p++;
+            return *this;
+        }
         // postfix ++
-        hash_map_iterator operator++(int);
+        hash_map_iterator operator++(int) {
+            auto t = *this;
+            p++;
+            return t;
+        }
 
-        friend bool operator==(const hash_map_iterator<ValueType>&, const hash_map_iterator<ValueType>&);
-        friend bool operator!=(const hash_map_iterator<ValueType>&, const hash_map_iterator<ValueType>&);
+        friend bool operator==(const hash_map_iterator<ValueType>& a, const hash_map_iterator<ValueType>& b) {
+            return a.operator-> == b.operator->;
+        }
+
+        friend bool operator!=(const hash_map_iterator<ValueType>& a, const hash_map_iterator<ValueType>& b) {
+            return a.operator-> != b.operator->;
+        }
+        
+
+    private:
+        pointer p;
     };
 
     template<typename ValueType>
@@ -73,11 +102,15 @@ namespace fefu
         using pointer = const ValueType*;
 
         hash_map_const_iterator() noexcept;
-        hash_map_const_iterator(const hash_map_const_iterator& other) noexcept;
-        hash_map_const_iterator(const hash_map_iterator<ValueType>& other) noexcept;
-
-        reference operator*() const;
-        pointer operator->() const;
+        hash_map_const_iterator(const hash_map_const_iterator& other) noexcept : p(other.p) {};
+        hash_map_const_iterator(const hash_map_iterator<ValueType>& other) noexcept : p(other.operator->) {};
+        hash_map_const_iterator(const pointer p_) noexcept : p(p_) {}
+        reference operator*() const {
+            return *p;
+        }
+        pointer operator->() const {
+            return p;
+        }
 
         // prefix ++
         hash_map_const_iterator& operator++();
@@ -86,13 +119,16 @@ namespace fefu
 
         friend bool operator==(const hash_map_const_iterator<ValueType>&, const hash_map_const_iterator<ValueType>&);
         friend bool operator!=(const hash_map_const_iterator<ValueType>&, const hash_map_const_iterator<ValueType>&);
+
+    private:
+        const pointer p;
     };
+
     template<typename K, typename T,
         typename Hash = std::hash<K>,
         typename Pred = std::equal_to<K>,
         typename Alloc = allocator<std::pair<const K, T>>>
-        class hash_map
-    {
+    class hash_map {
     public:
         using key_type = K;
         using mapped_type = T;
@@ -113,9 +149,9 @@ namespace fefu
          *  @brief  Default constructor creates no elements.
          *  @param n  Minimal initial number of buckets.
          */
-        explicit hash_map(size_type n) : 
+        explicit hash_map(size_type n) :
             m_set(n, 0),
-            m_data(m_allocator.allocate(n)){};
+            m_data(m_allocator.allocate(n)) {}
 
         /**
          *  @brief  Builds an %hash_map from a range.
@@ -132,10 +168,29 @@ namespace fefu
             size_type n = 0);
 
         /// Copy constructor.
-        hash_map(const hash_map&);
+        hash_map(const hash_map& m) : m_set(m.m_set) {
+            size_type n = m_set.size();
+            m_data(m_allocator.allocate(n));
 
+            value_type* t_data = m_data;
+            for (size_type i = 0; i < n; i++) {
+                if (m_set[i])
+                    *t_data = *(m.m_data + i);
+                t_data++;
+            }
+        }
         /// Move constructor.
-        hash_map(hash_map&&);
+        hash_map(hash_map&& m) { 
+            size_type n = m_set.size();
+            m_data(m_allocator.allocate(n));
+
+            value_type* t_data = m_data;
+            for (size_type i = 0; i < n; i++) {
+                if (m_set[i])
+                    *t_data = *(m.m_data + i);
+                t_data++;
+            }
+        }
 
         /**
          *  @brief Creates an %hash_map with no elements.
@@ -190,7 +245,9 @@ namespace fefu
         hash_map& operator=(std::initializer_list<value_type> l);
 
         ///  Returns the allocator object used by the %hash_map.
-        allocator_type get_allocator() const noexcept;
+        allocator_type get_allocator() const noexcept {
+            return m_allocator;
+        }
 
         // size and capacity:
 
@@ -209,31 +266,67 @@ namespace fefu
          *  Returns a read/write iterator that points to the first element in the
          *  %hash_map.
          */
-        iterator begin() noexcept;
+        iterator begin() noexcept {
+            size_type i = 0;
+            while (i < m_set.size() && !m_set[i])
+                i++;
+
+            return iterator(m_data + i);
+        };
 
         //@{
         /**
          *  Returns a read-only (constant) iterator that points to the first
          *  element in the %hash_map.
          */
-        const_iterator begin() const noexcept;
+        const_iterator begin() const noexcept {
+            size_type i = 0;
+            while (i < m_set.size() && !m_set[i])
+                i++;
 
-        const_iterator cbegin() const noexcept;
+            return const_iterator(m_data + i);
+        }
+
+        const_iterator cbegin() const noexcept {
+            size_type i = 0;
+            while (i < m_set.size() && !m_set[i])
+                i++;
+
+            return const_iterator(m_data + i);
+        }
 
         /**
          *  Returns a read/write iterator that points one past the last element in
          *  the %hash_map.
          */
-        iterator end() noexcept;
+        iterator end() noexcept {
+            size_type i = m_set.size() - 1;
+            while (i >= 0 && !m_set[i])
+                i--;
+
+            return iterator(m_data + i);
+        }
 
         //@{
         /**
          *  Returns a read-only (constant) iterator that points one past the last
          *  element in the %hash_map.
          */
-        const_iterator end() const noexcept;
+        const_iterator end() const noexcept {
+            size_type i = m_set.size() - 1;
+            while (i >= 0 && !m_set[i])
+                i--;
 
-        const_iterator cend() const noexcept;
+            return const_iterator(m_data + i);
+        }
+
+        const_iterator cend() const noexcept {
+            size_type i = m_set.size() - 1;
+            while (i >= 0 && !m_set[i])
+                i--;
+
+            return const_iterator(m_data + i);
+        }
         //@}
 
         // modifiers.
@@ -265,35 +358,6 @@ namespace fefu
          *  @brief Attempts to build and insert a std::pair into the
          *  %hash_map.
          *
-         *  @param  pos  An iterator that serves as a hint as to where the pair
-         *                should be inserted.
-         *  @param  args  Arguments used to generate a new pair instance (see
-         *	         std::piecewise_contruct for passing arguments to each
-        *	         part of the pair constructor).
-        *  @return An iterator that points to the element with key of the
-        *          std::pair built from @a args (may or may not be that
-        *          std::pair).
-        *
-        *  This function is not concerned about whether the insertion took place,
-        *  and thus does not return a boolean like the single-argument emplace()
-        *  does.
-        *  Note that the first parameter is only a hint and can potentially
-        *  improve the performance of the insertion process. A bad hint would
-        *  cause no gains in efficiency.
-        *
-        *  See
-        *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
-        *  for more on @a hinting.
-        *
-        *  Insertion requires amortized constant time.
-        */
-        template<typename... _Args>
-        iterator emplace_hint(const_iterator pos, _Args&&... args);
-
-        /**
-         *  @brief Attempts to build and insert a std::pair into the
-         *  %hash_map.
-         *
          *  @param k    Key to use for finding a possibly existing pair in
          *                the hash_map.
          *  @param args  Arguments used to generate the .second for a
@@ -319,42 +383,6 @@ namespace fefu
         template <typename... _Args>
         std::pair<iterator, bool> try_emplace(key_type&& k, _Args&&... args);
 
-        /**
-         *  @brief Attempts to build and insert a std::pair into the
-         *  %hash_map.
-         *
-         *  @param  hint  An iterator that serves as a hint as to where the pair
-         *                should be inserted.
-         *  @param k    Key to use for finding a possibly existing pair in
-         *                the hash_map.
-         *  @param args  Arguments used to generate the .second for a
-         *                new pair instance.
-         *  @return An iterator that points to the element with key of the
-         *          std::pair built from @a args (may or may not be that
-         *          std::pair).
-         *
-         *  This function is not concerned about whether the insertion took place,
-         *  and thus does not return a boolean like the single-argument emplace()
-         *  does. However, if insertion did not take place,
-         *  this function has no effect.
-         *  Note that the first parameter is only a hint and can potentially
-         *  improve the performance of the insertion process. A bad hint would
-         *  cause no gains in efficiency.
-         *
-         *  See
-         *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
-         *  for more on @a hinting.
-         *
-         *  Insertion requires amortized constant time.
-         */
-        template <typename... _Args>
-        iterator try_emplace(const_iterator hint, const key_type& k,
-            _Args&&... args);
-
-        // move-capable overload
-        template <typename... _Args>
-        iterator try_emplace(const_iterator hint, key_type&& k, _Args&&... args);
-
         //@{
         /**
          *  @brief Attempts to insert a std::pair into the %hash_map.
@@ -375,34 +403,6 @@ namespace fefu
         std::pair<iterator, bool> insert(const value_type& x);
 
         std::pair<iterator, bool> insert(value_type&& x);
-
-        //@}
-
-        //@{
-        /**
-         *  @brief Attempts to insert a std::pair into the %hash_map.
-         *  @param  hint  An iterator that serves as a hint as to where the
-         *                 pair should be inserted.
-         *  @param  x  Pair to be inserted (see std::make_pair for easy creation
-         *               of pairs).
-         *  @return An iterator that points to the element with key of
-         *           @a x (may or may not be the %pair passed in).
-         *
-         *  This function is not concerned about whether the insertion took place,
-         *  and thus does not return a boolean like the single-argument insert()
-         *  does.  Note that the first parameter is only a hint and can
-         *  potentially improve the performance of the insertion process.  A bad
-         *  hint would cause no gains in efficiency.
-         *
-         *  See
-         *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
-         *  for more on @a hinting.
-         *
-         *  Insertion requires amortized constant time.
-         */
-        iterator insert(const_iterator hint, const value_type& x);
-
-        iterator insert(const_iterator hint, value_type&& x);
 
         //@}
 
@@ -454,40 +454,6 @@ namespace fefu
         // move-capable overload
         template <typename _Obj>
         std::pair<iterator, bool> insert_or_assign(key_type&& k, _Obj&& obj);
-
-        /**
-         *  @brief Attempts to insert a std::pair into the %hash_map.
-         *  @param  hint  An iterator that serves as a hint as to where the
-         *                  pair should be inserted.
-         *  @param k    Key to use for finding a possibly existing pair in
-         *                the hash_map.
-         *  @param obj  Argument used to generate the .second for a pair
-         *                instance.
-         *  @return An iterator that points to the element with key of
-         *           @a x (may or may not be the %pair passed in).
-         *
-         *  This function is not concerned about whether the insertion took place,
-         *  and thus does not return a boolean like the single-argument insert()
-         *  does.
-         *  If the %pair was already in the %unordered map, the .second of
-         *  the %pair is assigned from obj.
-         *  Note that the first parameter is only a hint and can
-         *  potentially improve the performance of the insertion process.  A bad
-         *  hint would cause no gains in efficiency.
-         *
-         *  See
-         *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
-         *  for more on @a hinting.
-         *
-         *  Insertion requires amortized constant time.
-         */
-        template <typename _Obj>
-        iterator insert_or_assign(const_iterator hint, const key_type& k,
-            _Obj&& obj);
-
-        // move-capable overload
-        template <typename _Obj>
-        iterator insert_or_assign(const_iterator hint, key_type&& k, _Obj&& obj);
 
         //@{
         /**
@@ -626,25 +592,28 @@ namespace fefu
          *  Lookup requires constant time.
          */
         mapped_type& operator[](const key_type& k) {
-            const size_type h = m_hash(k);
-            const size_type index = h % m_set.size();
-            if (m_set[index])
-                return m_data[index].second;
+            size_type index = m_hash(k) % m_set.size();
 
-            new(m_data + index) value_type{ k, mapped_type{} };
+            if (m_set[index]) {
+                return (m_data + index)->second;
+            }
+
             m_set[index] = 1;
-            return m_data[index].second;
+            new(m_data + index) value_type{ k, mapped_type{} };
+            return (m_data + index)->second;
         }
 
         mapped_type& operator[](key_type&& k) {
-            const size_type h = m_hash(k);
-            const size_type index = h % m_set.size();
-            if (m_set[index])
-                return m_data[index].second;
+            size_type index = m_hash(k) % m_set.size();
 
-            new(m_data + index) value_type{ k, mapped_type{} };
+            if (m_set[index]) {
+                return (m_data + index)->second;
+            }
+
             m_set[index] = 1;
-            return m_data[index].second;
+            new(m_data + index) value_type{ k, mapped_type{} };
+            
+            return (m_data + index)->second;
         }
         //@}
 
@@ -656,9 +625,25 @@ namespace fefu
          *           such a data is present in the %hash_map.
          *  @throw  std::out_of_range  If no such data is present.
          */
-        mapped_type& at(const key_type& k);
+        mapped_type& at(const key_type& k) {
+            size_type index = m_hash(k) % m_set.size();
 
-        const mapped_type& at(const key_type& k) const;
+            if (m_set[index] == 0)
+                throw std::out_of_range("Error: index out of range!");
+
+            return (m_data + index)->second;
+        }
+
+        const mapped_type& at(const key_type& k) const {
+            size_type index = m_hash(k) % m_set.size();
+
+            if (!m_set[index]) {
+                throw std::out_of_range("Error: index out of range!");
+            }
+
+            const mapped_type& r = (m_data + index)->second;
+            return r;
+        }
         //@}
 
         // bucket interface.
@@ -708,13 +693,14 @@ namespace fefu
 
         bool operator==(const hash_map& other) const;
 
-        private:
-            allocator_type m_allocator;
-            hasher m_hash;
-            key_equal m_key_equal;
+    private:
 
-            std::vector<char> m_set;
-            value_type* m_data;
+        allocator_type m_allocator;
+        hasher m_hash;
+        key_equal m_key_equal;
+
+        std::vector<char> m_set;
+        value_type* m_data;
     };
 
 } // namespace fefu
