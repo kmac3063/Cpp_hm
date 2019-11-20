@@ -1,17 +1,20 @@
 #include "hash_map.hpp"
 #include <iostream>
+#include <map>
 
 using namespace std;
 
 int main() {
-    fefu::hash_map<int, int> M(10);
+    fefu::hash_map<int, int> M(103);
     
-    M[1] = 1;
-    M[100] = 2;
-    M[1000] = 3;
+    for (int i = 0; i < 10; i++)
+    {
+        M[i] = i + 10;
+    }
 
-    cout << M.at(1) << " " << M.at(1000) << '\n';
-    M.at(2);
+    for (auto it = M.begin(); it != M.end(); it++) {
+        cout << it->first << " " << it->second << '\n';
+    }
 
     return 0;
 }

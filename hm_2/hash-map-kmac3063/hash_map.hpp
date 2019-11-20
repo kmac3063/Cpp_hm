@@ -13,6 +13,7 @@
     Friend конструктор для итераторов
     Инкремент/декремент в конст итераторе
 
+    Хочу хранить ссылку на мап в итераторе, чтобы знать размер. Можно хранить итератор начала и конца
 */
 namespace fefu
 {
@@ -83,7 +84,7 @@ namespace fefu
         }
 
         friend bool operator!=(const hash_map_iterator<ValueType>& a, const hash_map_iterator<ValueType>& b) {
-            return a.operator-> != b.operator->;
+            return *a != *b;
         }
         
 
@@ -304,7 +305,7 @@ namespace fefu
             while (i >= 0 && !m_set[i])
                 i--;
 
-            return iterator(m_data + i);
+            return iterator(m_data + i + 1);
         }
 
         //@{
@@ -317,7 +318,7 @@ namespace fefu
             while (i >= 0 && !m_set[i])
                 i--;
 
-            return const_iterator(m_data + i);
+            return const_iterator(m_data + i + 1);
         }
 
         const_iterator cend() const noexcept {
@@ -325,7 +326,7 @@ namespace fefu
             while (i >= 0 && !m_set[i])
                 i--;
 
-            return const_iterator(m_data + i);
+            return const_iterator(m_data + i + 1);
         }
         //@}
 
