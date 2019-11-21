@@ -227,27 +227,34 @@ namespace fefu
                 size_type n = 0);
 
             /// Copy constructor.
-            hash_map(const hash_map& m) : m_set(m.m_set) {
-                size_type n = m_set.size();
-                m_data(m_allocator.allocate(n));
+            hash_map(const hash_map& m) : 
+                m_set(m.m_set),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_allocator(m.get_allocator()),
+                m_hash(m.hash_function()),
+                m_key_equal(m.key_eq()),
+                load_factor_(m.max_load_factor()) {
 
                 value_type* t_data = m_data;
-                for (size_type i = 0; i < n; i++) {
-                    if (m_set[i])
-                        *t_data = *(m.m_data + i);
-                    t_data++;
+                memcpy(m_data, m.m_data, m.m_set.size());
+
+                for (auto i : m_set) {
+                    if (i) use_size++;
                 }
             }
             /// Move constructor.
-            hash_map(hash_map&& m) {
-                size_type n = m_set.size();
-                m_data(m_allocator.allocate(n));
+            hash_map(hash_map&& m) :
+                m_set(m.m_set),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_allocator(m.get_allocator()),
+                m_hash(m.hash_function()),
+                m_key_equal(m.key_eq()),
+                load_factor_(m.max_load_factor()) {
 
-                value_type* t_data = m_data;
-                for (size_type i = 0; i < n; i++) {
-                    if (m_set[i])
-                        *t_data = *(m.m_data + i);
-                    t_data++;
+                memmove(m_data, m.m_data, m.m_set.size());
+                
+                for (auto i : m_set) {
+                    if (i) use_size++;
                 }
             }
 
@@ -766,7 +773,15 @@ namespace fefu
              *  %hash_map maximum load factor.
              */
             void rehash(size_type n) {
+                if (static_cast<float>(use_size) / n > max_load_factor())
+                    return;
 
+                hash_map hash_m(n);
+                hash_m.max_load_factor(load_factor_);
+                
+                for (auto it = begin(); it != end(); it++) {
+                    hash_m.insert(*it);
+                }
             }
 
             /**

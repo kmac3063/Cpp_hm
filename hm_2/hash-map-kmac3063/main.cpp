@@ -16,5 +16,7 @@ int main() {
         std::cout << it->first << " " << it->second << "\n";
     }
 
+    M.rehash(100);
+
     return 0;
 }
