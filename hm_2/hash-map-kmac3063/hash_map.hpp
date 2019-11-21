@@ -57,39 +57,60 @@ namespace fefu
         using pointer = ValueType*;
 
         hash_map_iterator() noexcept = default;
-        hash_map_iterator(const hash_map_iterator& other) noexcept : p(other.p) {}
-        hash_map_iterator(const pointer p_) noexcept : p(p_) {}
+        hash_map_iterator(const hash_map_iterator& other) noexcept : p(other.p), i(other.i) {}
+        hash_map_iterator(const std::pair<pointer, std::vector<char>&> p_, size_t i_) noexcept : 
+            p(p_), i(i_) {}
 
         reference operator*() const {
-            return *p;
+            return *p.first;
         }
         pointer operator->() const {
-            return p;
+            return p.first;
         }
 
         // prefix ++
         hash_map_iterator& operator++() {
-            p++;
+            if (i >= p.second.size())
+                throw;
+
+            i++;
+            p.first++;
+            while (i < p.second.size() && !p.second[i]) {
+                i++;
+                p.first++;
+            }
+
             return *this;
         }
         // postfix ++
         hash_map_iterator operator++(int) {
-            auto t = *this;
-            p++;
+            hash_map_iterator t(*this);
+            
+            if (i >= p.second.size())
+                throw;
+
+            i++;
+            p.first++;
+            while (i < p.second.size() && !p.second[i]) {
+                i++;
+                p.first++;
+            }
+
             return t;
         }
 
         friend bool operator==(const hash_map_iterator<ValueType>& a, const hash_map_iterator<ValueType>& b) {
-            return a.operator-> == b.operator->;
+            return (a->first == b->first) && (a->second == b->second);
         }
 
         friend bool operator!=(const hash_map_iterator<ValueType>& a, const hash_map_iterator<ValueType>& b) {
-            return *a != *b;
+            return !(a == b);
         }
         
 
     private:
-        pointer p;
+        size_t i = 0;
+        std::pair<pointer, std::vector<char>&> p;
     };
 
     template<typename ValueType>
@@ -272,7 +293,7 @@ namespace fefu
             while (i < m_set.size() && !m_set[i])
                 i++;
 
-            return iterator(m_data + i);
+            return iterator({ m_data + i, m_set}, i);
         };
 
         //@{
@@ -305,7 +326,7 @@ namespace fefu
             while (i >= 0 && !m_set[i])
                 i--;
 
-            return iterator(m_data + i + 1);
+            return iterator({ m_data + i + 1, m_set }, i);
         }
 
         //@{
