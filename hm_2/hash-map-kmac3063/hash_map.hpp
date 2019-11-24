@@ -233,7 +233,7 @@ namespace fefu
                 m_allocator(m.get_allocator()),
                 m_hash(m.hash_function()),
                 m_key_equal(m.key_eq()),
-                load_factor_(m.max_load_factor()) {
+                max_load_factor_(m.max_load_factor()) {
 
                 value_type* t_data = m_data;
                 memcpy(m_data, m.m_data, m.m_set.size());
@@ -249,7 +249,7 @@ namespace fefu
                 m_allocator(m.get_allocator()),
                 m_hash(m.hash_function()),
                 m_key_equal(m.key_eq()),
-                load_factor_(m.max_load_factor()) {
+                max_load_factor_(m.max_load_factor()) {
 
                 memmove(m_data, m.m_data, m.m_set.size());
                 
@@ -292,7 +292,9 @@ namespace fefu
                 size_type n = 0);
 
             /// Copy assignment operator.
-            hash_map& operator=(const hash_map&);
+            hash_map& operator=(const hash_map&) {
+                return *this;
+            }
 
             /// Move assignment operator.
             hash_map& operator=(hash_map&&);
@@ -460,9 +462,21 @@ namespace fefu
             *
             *  Insertion requires amortized constant time.
             */
-            std::pair<iterator, bool> insert(const value_type& x);
+            std::pair<iterator, bool> insert(const value_type& x) {
+                size_type index = bucket(x.first);
+                if (m_set[index]) {
+                    return std::make_pair(iterator({ m_data, m_set }, index), 0);
+                }
+                this[x.first] = x.second;
+            }
 
-            std::pair<iterator, bool> insert(value_type&& x);
+            std::pair<iterator, bool> insert(value_type&& x) {
+                size_type index = bucket(x.first);
+                if (m_set[index]) {
+                    return std::make_pair(iterator({ m_data, m_set }, index), 0);
+                }
+                (*this)[std::move(x.first)] = std::move(x.second);
+            }
 
             //@}
 
@@ -476,7 +490,9 @@ namespace fefu
              *  Complexity similar to that of the range constructor.
              */
             template<typename _InputIterator>
-            void insert(_InputIterator first, _InputIterator last);
+            void insert(_InputIterator first, _InputIterator last) {
+                
+            }
 
             /**
              *  @brief Attempts to insert a list of elements into the %hash_map.
@@ -485,7 +501,11 @@ namespace fefu
              *
              *  Complexity similar to that of the range constructor.
              */
-            void insert(std::initializer_list<value_type> l);
+            void insert(std::initializer_list<value_type> l) {
+                for (auto it = l.begin(); it != l.end(); it++){
+                    insert(*it);
+                }
+            }
 
 
             /**
@@ -529,10 +549,28 @@ namespace fefu
              *  element is itself a pointer, the pointed-to memory is not touched in
              *  any way.  Managing the pointer is the user's responsibility.
              */
-            iterator erase(const_iterator position);
+            iterator erase(const_iterator position) {
+                size_type index = bucket(position->first);
+                
+                if (!m_set[index])
+                    return end();
+                
+                erase(position->first);
+
+                return iterator({ m_data, m_set }, bucket((++position)->first));
+            }
 
             // LWG 2059.
-            iterator erase(iterator position);
+            iterator erase(iterator position) {
+                size_type index = bucket(position->first);
+
+                if (!m_set[index])
+                    return end();
+
+                erase(position->first);
+
+                return ++position;
+            }
             //@}
 
             /**
@@ -547,7 +585,14 @@ namespace fefu
              *  element is itself a pointer, the pointed-to memory is not touched in
              *  any way.  Managing the pointer is the user's responsibility.
              */
-            size_type erase(const key_type& x);
+            size_type erase(const key_type& x) {
+                size_type index = bucket(x);
+                if (!m_set[index])
+                    return 0;
+                
+                m_set[index] = 0;
+                return 1;
+            }
 
             /**
              *  @brief Erases a [first,last) range of elements from an
@@ -563,7 +608,12 @@ namespace fefu
              *  the element is itself a pointer, the pointed-to memory is not touched
              *  in any way.  Managing the pointer is the user's responsibility.
              */
-            iterator erase(const_iterator first, const_iterator last);
+            iterator erase(const_iterator first, const_iterator last) {
+                for (auto it = first; it != last; it++) {
+                    erase(it);
+                }
+                return iterator({ m_data, m_set }, bucket(last->first));
+            }
 
             /**
              *  Erases all elements in an %hash_map.
@@ -571,7 +621,13 @@ namespace fefu
              *  elements themselves are pointers, the pointed-to memory is not touched
              *  in any way.  Managing the pointer is the user's responsibility.
              */
-            void clear() noexcept;
+            void clear() noexcept {
+                //m_allocator.deallocate(m_data, m_set.size());
+                //m_data = m_allocator.allocate(m_set.size());
+
+                use_size = 0;
+                m_set.clear();
+            }
 
             /**
              *  @brief  Swaps data with another %hash_map.
@@ -583,7 +639,11 @@ namespace fefu
              *  Note that the global std::swap() function is specialized such that
              *  std::swap(m1,m2) will feed to this function.
              */
-            void swap(hash_map& x);
+            void swap(hash_map& x) {
+                hash_map temp_map(*this);
+                *this = x;
+                x = temp_map;
+            }
 
             template<typename _H2, typename _P2>
             void merge(hash_map<K, T, _H2, _P2, Alloc>& source);
@@ -620,7 +680,7 @@ namespace fefu
              *  past-the-end ( @c end() ) iterator.
              */
             iterator find(const key_type& x) {
-                size_type index = m_hash(x) % m_set.size();
+                size_type index = bucket(x);
                 
                 if (!m_set[index])
                     return end();
@@ -629,7 +689,7 @@ namespace fefu
             }
 
             const_iterator find(const key_type& x) const {
-                size_type index = m_hash(x) % m_set.size();
+                size_type index = bucket(x);
 
                 if (!m_set[index])
                     return end();
@@ -648,7 +708,7 @@ namespace fefu
              *  (present).
              */
             size_type count(const key_type& x) const {
-                return m_set[m_hash(x) % m_set.size()];
+                return m_set[bucket(x)];
             }
 
             /**
@@ -674,26 +734,23 @@ namespace fefu
              *  Lookup requires constant time.
              */
             mapped_type& operator[](const key_type& k) {
-                size_type index = m_hash(k) % m_set.size();
+                size_type index = bucket(k);
 
-                if (m_set[index]) {
-                    return (m_data + index)->second;
+                if (!m_set[index]) {
+                    m_set[index] = 1;
+                    new(m_data + index) value_type{ k, mapped_type{} };
                 }
 
-                m_set[index] = 1;
-                new(m_data + index) value_type{ k, mapped_type{} };
                 return (m_data + index)->second;
             }
 
             mapped_type& operator[](key_type&& k) {
-                size_type index = m_hash(k) % m_set.size();
+                size_type index = bucket(k);
 
-                if (m_set[index]) {
-                    return (m_data + index)->second;
+                if (!m_set[index]) {
+                    m_set[index] = 1;
+                    new(m_data + index) value_type{ std::move(k), mapped_type{} };
                 }
-
-                m_set[index] = 1;
-                new(m_data + index) value_type{ k, mapped_type{} };
 
                 return (m_data + index)->second;
             }
@@ -708,7 +765,7 @@ namespace fefu
              *  @throw  std::out_of_range  If no such data is present.
              */
             mapped_type& at(const key_type& k) {
-                size_type index = m_hash(k) % m_set.size();
+                size_type index = bucket(k);
 
                 if (m_set[index] == 0)
                     throw std::out_of_range("Error: index out of range!");
@@ -717,7 +774,7 @@ namespace fefu
             }
 
             const mapped_type& at(const key_type& k) const {
-                size_type index = m_hash(k) % m_set.size();
+                size_type index = bucket(k);
 
                 if (!m_set[index]) {
                     throw std::out_of_range("Error: index out of range!");
@@ -754,7 +811,7 @@ namespace fefu
             /// Returns a positive number that the %hash_map tries to keep the
             /// load factor less than or equal to.
             float max_load_factor() const noexcept {
-                return load_factor_;
+                return max_load_factor_;
             }
 
             /**
@@ -762,7 +819,7 @@ namespace fefu
              *  @param  z The new maximum load factor.
              */
             void max_load_factor(float z) {
-                load_factor_ = z;
+                max_load_factor_ = z;
             }
 
             /**
@@ -773,11 +830,11 @@ namespace fefu
              *  %hash_map maximum load factor.
              */
             void rehash(size_type n) {
-                if (static_cast<float>(use_size) / n > max_load_factor())
+                if (static_cast<float>(use_size) / m_set.size() > max_load_factor())
                     return;
 
                 hash_map hash_m(n);
-                hash_m.max_load_factor(load_factor_);
+                hash_m.max_load_factor(max_load_factor_);
                 
                 for (auto it = begin(); it != end(); it++) {
                     hash_m.insert(*it);
@@ -792,7 +849,7 @@ namespace fefu
              *  Same as rehash(ceil(n / max_load_factor())).
              */
             void reserve(size_type n) {
-                rehash(n / load_factor_);
+                rehash(n / max_load_factor_);
             }
 
             bool operator==(const hash_map& other) const {
@@ -813,7 +870,7 @@ namespace fefu
             std::vector<char> m_set;
             value_type* m_data;
             size_type use_size = 0;
-            float load_factor_ = BASE_LOAD_FACTOR;
+            float max_load_factor_ = BASE_LOAD_FACTOR;
     };
 
 } // namespace fefu

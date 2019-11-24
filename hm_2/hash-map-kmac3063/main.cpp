@@ -2,21 +2,14 @@
 #include <iostream>
 #include <map>
 
-using namespace std;
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include "../../catch.hpp"
 
-int main() {
-    fefu::hash_map<int, int> M(103);
-    
-    for (int i = 0; i < 10; i++)
-    {
-        M[i] = i + 10;
-    }
+using namespace fefu;
 
-    for (auto it = M.begin(); it != M.end(); ++it) {
-        std::cout << it->first << " " << it->second << "\n";
-    }
-
-    M.rehash(100);
-
-    return 0;
+TEST_CASE("Constructor") {
+    hash_map<int, int> map1(10);
+    hash_map<int, int> map2(10);
+    map1.insert({ 3, 3 });
+    REQUIRE(map1.at(3) == 3);
 }
