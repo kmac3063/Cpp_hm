@@ -224,62 +224,80 @@ namespace fefu
              */
             template<typename InputIterator>
             hash_map(InputIterator first, InputIterator last,
-                size_type n = 0);
+                size_type n = 0) {
+                hash_map map(std::max(n, 1));
+                for (auto it = firts; it != last; it++)
+                    map.insert(*it);
+                return *this = map;
+            }
 
             /// Copy constructor.
-            hash_map(const hash_map& m) : 
+            hash_map(const hash_map& m) :
                 m_set(m.m_set),
-                m_data(m_allocator.allocate(m.m_set.size())),
                 m_allocator(m.get_allocator()),
+                m_data(m_allocator.allocate(m.m_set.size())),
                 m_hash(m.hash_function()),
                 m_key_equal(m.key_eq()),
-                max_load_factor_(m.max_load_factor()) {
+                use_size(m.size()) {
 
-                value_type* t_data = m_data;
+                max_load_factor(m.max_load_factor());
                 memcpy(m_data, m.m_data, m.m_set.size());
-
-                for (auto i : m_set) {
-                    if (i) use_size++;
-                }
             }
             /// Move constructor.
             hash_map(hash_map&& m) :
                 m_set(m.m_set),
-                m_data(m_allocator.allocate(m.m_set.size())),
                 m_allocator(m.get_allocator()),
+                m_data(m_allocator.allocate(m.m_set.size())),
                 m_hash(m.hash_function()),
                 m_key_equal(m.key_eq()),
-                max_load_factor_(m.max_load_factor()) {
+                use_size(m.size()) {
 
+                max_load_factor(m.max_load_factor());
                 memmove(m_data, m.m_data, m.m_set.size());
-                
-                for (auto i : m_set) {
-                    if (i) use_size++;
-                }
             }
 
             /**
              *  @brief Creates an %hash_map with no elements.
              *  @param a An allocator object.
              */
-            explicit hash_map(const allocator_type& a);
+            explicit hash_map(const allocator_type& a) {
+                m_allocator = a;
+            }
 
             /*
             *  @brief Copy constructor with allocator argument.
             * @param  uset  Input %hash_map to copy.
             * @param  a  An allocator object.
             */
-            hash_map(const hash_map& umap,
-                const allocator_type& a);
+            hash_map(const hash_map& m,
+                const allocator_type& a) :
+                m_set(m.m_set),
+                m_allocator(a),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(m.hash_function()),
+                m_key_equal(m.key_eq()),
+                use_size(m.size()) {
 
+                max_load_factor(m.max_load_factor());
+                memcpy(m_data, m.m_data, m.m_set.size());
+            }
             /*
             *  @brief  Move constructor with allocator argument.
             *  @param  uset Input %hash_map to move.
             *  @param  a    An allocator object.
             */
-            hash_map(hash_map&& umap,
-                const allocator_type& a);
+            hash_map(hash_map&& m,
+                const allocator_type& a) :
+                m_set(std::move(m.m_set)),
+                m_allocator(std::move(a)),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(std::move(m.hash_function())),
+                m_key_equal(std::move(m.key_eq())),
+                use_size(m.size()) {
 
+                max_load_factor(m.max_load_factor());
+                memmove(m_data, m.m_data, m.m_set.size());
+            }
             /**
              *  @brief  Builds an %hash_map from an initializer_list.
              *  @param  l  An initializer_list.
@@ -289,15 +307,43 @@ namespace fefu
              *  list. This is linear in N (where N is @a l.size()).
              */
             hash_map(std::initializer_list<value_type> l,
-                size_type n = 0);
+                size_type n = 0) {
+                hash_map map(std::max(n, 1));
+                for (auto el : l)
+                    map.insert(el);
+                return *this = map;
+            }
 
             /// Copy assignment operator.
-            hash_map& operator=(const hash_map&) {
-                return *this;
+            hash_map& operator=(const hash_map& m) {
+                m_allocator.dealocate(m_data, m_set.size());
+
+                m_set = m.m_set;
+                m_allocator = m.m_allocator;
+                m_data = m_allocator.allocate(m.m_set.size());
+                
+                m_hash = m.hash_function();
+                m_key_equal = m.key_eq();
+                use_size = m.size();
+                max_load_factor(m.max_load_factor());
+                memcpy(m_data, m.m_data, m.m_set.size());
             }
 
             /// Move assignment operator.
-            hash_map& operator=(hash_map&&);
+            hash_map& operator=(hash_map&& m) {
+                m_allocator.dealocate(m_data, m_set.size());
+
+                m_set = std::move(m.m_set);
+                m_allocator = std::move(m.m_allocator);
+                m_data = m_allocator.allocate(m.m_set.size());
+
+                m_hash = std::move(m.hash_function());
+                m_key_equal = std::move(m.key_eq());
+                use_size = m.size();
+                max_load_factor(m.max_load_factor());
+
+                memmove(m_data, m.m_data, m.m_set.size()); 
+            }
 
             /**
              *  @brief  %hash_map list assignment operator.
@@ -310,7 +356,12 @@ namespace fefu
              *  that the resulting %hash_map's size is the same as the number
              *  of elements assigned.
              */
-            hash_map& operator=(std::initializer_list<value_type> l);
+            hash_map& operator=(std::initializer_list<value_type> l) {
+                hash_map map(l.size());
+                for (auto el : l)
+                    map.insert(el);
+                return *this = map;
+            }
 
             ///  Returns the allocator object used by the %hash_map.
             allocator_type get_allocator() const noexcept {
@@ -411,10 +462,12 @@ namespace fefu
             *  inserted if its first element (the key) is not already present in the
             *  %hash_map.
             *
-            *  Insertion requires amortized constant time.
+            *  Insertion requires amortized constant time. 
             */
             template<typename... _Args>
-            std::pair<iterator, bool> emplace(_Args&&... args);
+            std::pair<iterator, bool> emplace(_Args&&... args) {
+                va_list p;
+            }
 
             /**
              *  @brief Attempts to build and insert a std::pair into the
@@ -467,7 +520,7 @@ namespace fefu
                 if (m_set[index]) {
                     return std::make_pair(iterator({ m_data, m_set }, index), 0);
                 }
-                this[x.first] = x.second;
+                (*this)[x.first] = x.second;
             }
 
             std::pair<iterator, bool> insert(value_type&& x) {
@@ -491,7 +544,9 @@ namespace fefu
              */
             template<typename _InputIterator>
             void insert(_InputIterator first, _InputIterator last) {
-                
+                for (auto it = first; it != last; it++) {
+                    insert(*it);
+                }
             }
 
             /**
@@ -591,6 +646,7 @@ namespace fefu
                     return 0;
                 
                 m_set[index] = 0;
+                use_size--;
                 return 1;
             }
 
@@ -610,7 +666,7 @@ namespace fefu
              */
             iterator erase(const_iterator first, const_iterator last) {
                 for (auto it = first; it != last; it++) {
-                    erase(it);
+                    erase(it->first);
                 }
                 return iterator({ m_data, m_set }, bucket(last->first));
             }
@@ -622,9 +678,6 @@ namespace fefu
              *  in any way.  Managing the pointer is the user's responsibility.
              */
             void clear() noexcept {
-                //m_allocator.deallocate(m_data, m_set.size());
-                //m_data = m_allocator.allocate(m_set.size());
-
                 use_size = 0;
                 m_set.clear();
             }
@@ -737,8 +790,15 @@ namespace fefu
                 size_type index = bucket(k);
 
                 if (!m_set[index]) {
-                    m_set[index] = 1;
+                    use_size++;
+                    if (load_factor() > max_load_factor()) {
+                        rehash((3 * bucket_count() + 1) / 2);
+                        index = bucket(k);
+                    }
+
                     new(m_data + index) value_type{ k, mapped_type{} };
+
+                    m_set[index] = 1;
                 }
 
                 return (m_data + index)->second;
@@ -748,8 +808,15 @@ namespace fefu
                 size_type index = bucket(k);
 
                 if (!m_set[index]) {
-                    m_set[index] = 1;
+                    use_size++;
+                    if (load_factor() > max_load_factor()) {
+                        rehash((3 * bucket_count() + 1) / 2);
+                        index = bucket(k);
+                    }
+                    
                     new(m_data + index) value_type{ std::move(k), mapped_type{} };
+                    
+                    m_set[index] = 1;
                 }
 
                 return (m_data + index)->second;
