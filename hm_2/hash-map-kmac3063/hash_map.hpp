@@ -17,7 +17,10 @@
 */
 namespace fefu
 {
-
+    #define EMPTY 0
+    #define USE 1
+    #define DEL 2
+    
     template<typename T>
     class allocator {
     public:
@@ -47,6 +50,15 @@ namespace fefu
         }
     };
 
+    template<typename K, typename T,
+        typename Hash,
+        typename Pred,
+        typename Alloc>
+        class hash_map;
+
+    template<typename ValueType>
+    class hash_map_const_iterator;
+
     template<typename ValueType>
     class hash_map_iterator {
     public:
@@ -57,28 +69,28 @@ namespace fefu
         using pointer = ValueType*;
 
         hash_map_iterator() noexcept = default;
-        hash_map_iterator(const hash_map_iterator& other) noexcept : p(other.p), i(other.i) {}
-        hash_map_iterator(const std::pair<pointer, std::vector<char>&> p_, size_t i_) noexcept :
-            p { p_.first + i_, p_.second },
-            i(i_) {}
+        hash_map_iterator(const hash_map_iterator& other) noexcept : 
+            p(other.p), 
+            s(other.s),
+            i(other.i) {}
 
         reference operator*() const {
-            return *p.first;
+            return *p;
         }
         pointer operator->() const {
-            return p.first;
+            return p;
         }
 
         // prefix ++
         hash_map_iterator& operator++() {
-            if (i >= p.second.size())
+            if (i >= s->size())
                 throw;
 
             i++;
-            p.first++;
-            while (i < p.second.size() && !p.second[i]) {
+            p++;
+            while (i < s->size() && (*s)[i] != USE) {
                 i++;
-                p.first++;
+                p++;
             }
 
             return *this;
@@ -87,14 +99,14 @@ namespace fefu
         hash_map_iterator operator++(int) {
             hash_map_iterator t(*this);
 
-            if (i >= p.second.size())
+            if (i >= s->size())
                 throw;
 
             i++;
-            p.first++;
-            while (i < p.second.size() && !p.second[i]) {
+            p++;
+            while (i < s->size() && (*s)[i] != USE) {
                 i++;
-                p.first++;
+                p++;
             }
 
             return t;
@@ -108,10 +120,23 @@ namespace fefu
             return &*a != &*b;
         }
 
+        template<typename ValueType>
+        friend class hash_map_const_iterator;
 
+        template<typename K, typename T,
+            typename Hash,
+            typename Pred,
+            typename Alloc>
+            friend class hash_map;
     private:
+        hash_map_iterator(pointer p_, std::vector<char>* s_, size_t i_) noexcept : 
+            i(i_),
+            p(p_ + i_),
+            s(s_) {}
+
         size_t i = 0;
-        std::pair<pointer, std::vector<char>&> p;
+        pointer p = 0;
+        std::vector<char>* s;
     };
 
     template<typename ValueType>
@@ -124,51 +149,54 @@ namespace fefu
         using reference = const ValueType&;
         using pointer = const ValueType*;
 
-        hash_map_const_iterator() noexcept;
+        hash_map_const_iterator() noexcept {};
         hash_map_const_iterator(const hash_map_const_iterator& other) noexcept : 
             p(other.p), 
+            s(other.s), 
             i(other.i) {};
-        hash_map_const_iterator(const hash_map_iterator<ValueType>& other) noexcept : p(other.operator->) {};
-        hash_map_const_iterator(const std::pair<pointer, std::vector<char>&> p_, size_t i_) noexcept : 
-            p{ p_.first + i_, p_.second },
-            i(i_) {}
+        hash_map_const_iterator(const hash_map_iterator<ValueType>& other) noexcept :
+            p(other.p),
+            s(other.s),
+            i(other.i) {};
+
         reference operator*() const {
-            return *p.first;
+            return *p;
         }
         pointer operator->() const {
-            return p.first;
+            return p;
         }
 
         // prefix ++
         hash_map_const_iterator& operator++() {
-            if (i >= p.second.size())
+            if (i >= s->size())
                 throw;
 
             i++;
-            p.first++;
-            while (i < p.second.size() && !p.second[i]) {
+            p++;
+            while (i < s->size() && (*s)[i] != USE) {
                 i++;
-                p.first++;
+                p++;
             }
 
             return *this;
         }
         // postfix ++
         hash_map_const_iterator operator++(int) {
-            hash_map_iterator t(*this);
+            hash_map_const_iterator t(*this);
 
-            if (i >= p.second.size())
+            if (i >= s->size())
                 throw;
 
             i++;
-            p.first++;
-            while (i < p.second.size() && !p.second[i]) {
+            p++;
+            while (i < s->size() && (*s)[i] != USE) {
                 i++;
-                p.first++;
+                p++;
             }
 
             return t;
         }
+
 
         friend bool operator==(const hash_map_const_iterator<ValueType>& a, const hash_map_const_iterator<ValueType>& b) {
             return &*a == &*b;
@@ -177,9 +205,21 @@ namespace fefu
             return &*a != &*b;
         }
 
+        template<typename K, typename T,
+            typename Hash,
+            typename Pred,
+            typename Alloc>
+            friend class hash_map;
+
     private:
+        hash_map_const_iterator(pointer p_, const std::vector<char>* s_, const size_t i_) noexcept : 
+            i(i_),
+            p(p_ + i_),
+            s(s_) {}
+
         size_t i = 0;
-        std::pair<pointer, std::vector<char>&> p;
+        pointer p = 0;
+        const std::vector<char>* s;
     };
 
     template<typename K, typename T,
@@ -226,7 +266,7 @@ namespace fefu
             hash_map(InputIterator first, InputIterator last,
                 size_type n = 0) {
                 hash_map map(std::max(n, 1));
-                for (auto it = firts; it != last; it++)
+                for (auto it = first; it != last; it++)
                     map.insert(*it);
                 return *this = map;
             }
@@ -316,7 +356,7 @@ namespace fefu
 
             /// Copy assignment operator.
             hash_map& operator=(const hash_map& m) {
-                m_allocator.dealocate(m_data, m_set.size());
+                m_allocator.deallocate(m_data, m_set.size());
 
                 m_set = m.m_set;
                 m_allocator = m.m_allocator;
@@ -327,6 +367,8 @@ namespace fefu
                 use_size = m.size();
                 max_load_factor(m.max_load_factor());
                 memcpy(m_data, m.m_data, m.m_set.size());
+
+                return *this;
             }
 
             /// Move assignment operator.
@@ -382,7 +424,7 @@ namespace fefu
 
             ///  Returns the maximum size of the %hash_map.
             size_type max_size() const noexcept {
-                return INT32_MAX;
+                return UINT32_MAX;
             }
 
             // iterators.
@@ -393,11 +435,12 @@ namespace fefu
              */
             iterator begin() noexcept {
                 size_type i = 0;
-                while (i < m_set.size() && !m_set[i])
+                while (i < m_set.size() && m_set[i] != USE)
                     i++;
 
-                return iterator({ m_data, m_set }, i);
+                return iterator(m_data, &m_set, i);
             };
+
 
             //@{
             /**
@@ -406,18 +449,18 @@ namespace fefu
              */
             const_iterator begin() const noexcept {
                 size_type i = 0;
-                while (i < m_set.size() && !m_set[i])
+                while (i < m_set.size() && m_set[i] != USE)
                     i++;
 
-                return const_iterator({ m_data, m_set }, i);
+                return const_iterator(m_data, &m_set, i);
             }
 
             const_iterator cbegin() const noexcept {
                 size_type i = 0;
-                while (i < m_set.size() && !m_set[i])
+                while (i < m_set.size() && m_set[i] != USE)
                     i++;
 
-                return const_iterator({ m_data, m_set }, i);
+                return const_iterator(m_data, &m_set, i);
             }
 
             /**
@@ -425,7 +468,7 @@ namespace fefu
              *  the %hash_map.
              */
             iterator end() noexcept {
-                return iterator({ m_data, m_set }, m_set.size());
+                return iterator(m_data, &m_set, m_set.size());
             }
 
             //@{
@@ -434,11 +477,11 @@ namespace fefu
              *  element in the %hash_map.
              */
             const_iterator end() const noexcept {
-                return const_iterator({ m_data, m_set }, m_set.size());
+                return const_iterator(m_data, &m_set, m_set.size());
             }
 
             const_iterator cend() const noexcept {
-                return const_iterator({ m_data, m_set }, m_set.size());
+                return const_iterator(m_data, &m_set, m_set.size());
             }
             //@}
 
@@ -466,7 +509,7 @@ namespace fefu
             */
             template<typename... _Args>
             std::pair<iterator, bool> emplace(_Args&&... args) {
-                va_list p;
+                va_list p; 
             }
 
             /**
@@ -500,9 +543,9 @@ namespace fefu
 
             //@{
             /**
-             *  @brief Attempts to insert a std::pair into the %hash_map.
-             *  @param x Pair to be inserted (see std::make_pair for easy
-             *	     creation of pairs).
+            *  @brief Attempts to insert a std::pair into the %hash_map.
+            *  @param x Pair to be inserted (see std::make_pair for easy
+            *	     creation of pairs).
             *
             *  @return  A pair, of which the first element is an iterator that
             *           points to the possibly inserted pair, and the second is
@@ -517,18 +560,26 @@ namespace fefu
             */
             std::pair<iterator, bool> insert(const value_type& x) {
                 size_type index = bucket(x.first);
-                if (m_set[index]) {
-                    return std::make_pair(iterator({ m_data, m_set }, index), 0);
+
+                if (m_set[index] == USE) {
+                    return std::make_pair(iterator(m_data, &m_set, index), false);
                 }
+
                 (*this)[x.first] = x.second;
+                use_size++;
+                return std::make_pair(iterator(m_data, &m_set, index), true);
             }
 
             std::pair<iterator, bool> insert(value_type&& x) {
                 size_type index = bucket(x.first);
-                if (m_set[index]) {
-                    return std::make_pair(iterator({ m_data, m_set }, index), 0);
+
+                if (m_set[index] == USE) {
+                    return std::make_pair(iterator(m_data, &m_set, index), false);
                 }
+
                 (*this)[std::move(x.first)] = std::move(x.second);
+                use_size++;
+                return std::make_pair(iterator(m_data, &m_set, index), true);
             }
 
             //@}
@@ -605,26 +656,16 @@ namespace fefu
              *  any way.  Managing the pointer is the user's responsibility.
              */
             iterator erase(const_iterator position) {
-                size_type index = bucket(position->first);
-                
-                if (!m_set[index])
-                    return end();
-                
-                erase(position->first);
-
-                return iterator({ m_data, m_set }, bucket((++position)->first));
+                if (erase(position->first) == 1)
+                    return iterator(m_data, &m_set, bucket((++position)->first));
+                return end();
             }
 
             // LWG 2059.
             iterator erase(iterator position) {
-                size_type index = bucket(position->first);
-
-                if (!m_set[index])
-                    return end();
-
-                erase(position->first);
-
-                return ++position;
+                if (erase(position->first) == 1)
+                    return ++position;
+                return end();
             }
             //@}
 
@@ -642,11 +683,13 @@ namespace fefu
              */
             size_type erase(const key_type& x) {
                 size_type index = bucket(x);
-                if (!m_set[index])
+
+                if (m_set[index] != USE)
                     return 0;
                 
-                m_set[index] = 0;
+                m_set[index] = DEL;
                 use_size--;
+                
                 return 1;
             }
 
@@ -668,7 +711,8 @@ namespace fefu
                 for (auto it = first; it != last; it++) {
                     erase(it->first);
                 }
-                return iterator({ m_data, m_set }, bucket(last->first));
+
+                return iterator(last);
             }
 
             /**
@@ -678,6 +722,8 @@ namespace fefu
              *  in any way.  Managing the pointer is the user's responsibility.
              */
             void clear() noexcept {
+                m_allocator.deallocate(m_data, m_set.size());
+                m_data = m_allocator.allocate(m_set.size());
                 use_size = 0;
                 m_set.clear();
             }
@@ -735,19 +781,19 @@ namespace fefu
             iterator find(const key_type& x) {
                 size_type index = bucket(x);
                 
-                if (!m_set[index])
+                if (m_set[index] != USE)
                     return end();
 
-                return iterator({ m_data, m_set }, index);
+                return iterator(m_data, &m_set, index);
             }
 
             const_iterator find(const key_type& x) const {
                 size_type index = bucket(x);
 
-                if (!m_set[index])
+                if (m_set[index] != USE)
                     return end();
-
-                return const_iterator({ m_data, m_set }, index);
+                
+                return const_iterator(m_data, &m_set, index);
             }
             //@}
 
@@ -761,7 +807,7 @@ namespace fefu
              *  (present).
              */
             size_type count(const key_type& x) const {
-                return m_set[bucket(x)];
+                return (m_set[bucket(x)] == USE);
             }
 
             /**
@@ -770,7 +816,7 @@ namespace fefu
              *  @return  True if there is any element with the specified key.
              */
             bool contains(const key_type& x) const {
-                return (find(x) != end());
+                return (m_set[bucket(x)] == USE);
             }
 
             //@{
@@ -789,16 +835,19 @@ namespace fefu
             mapped_type& operator[](const key_type& k) {
                 size_type index = bucket(k);
 
-                if (!m_set[index]) {
-                    use_size++;
-                    if (load_factor() > max_load_factor()) {
-                        rehash((3 * bucket_count() + 1) / 2);
-                        index = bucket(k);
+                if (m_set[index] != USE) {
+                    if (m_set[index] == DEL) {
+                        m_data[index].~value_type();
                     }
+                    use_size++;
+                    m_set[index] = USE;
 
                     new(m_data + index) value_type{ k, mapped_type{} };
 
-                    m_set[index] = 1;
+                    if (load_factor() > max_load_factor()) {
+                        rehash(next_prime(3 * bucket_count() / 2));
+                        index = bucket(k);
+                    }
                 }
 
                 return (m_data + index)->second;
@@ -807,16 +856,19 @@ namespace fefu
             mapped_type& operator[](key_type&& k) {
                 size_type index = bucket(k);
 
-                if (!m_set[index]) {
+                if (m_set[index] != USE) {
+                    if (m_set[index] == DEL) {
+                        m_data[index].~value_type();
+                    }
                     use_size++;
+                    m_set[index] = USE;
+
+                    new(m_data + index) value_type{ std::move(k), mapped_type{} };
+
                     if (load_factor() > max_load_factor()) {
-                        rehash((3 * bucket_count() + 1) / 2);
+                        rehash(next_prime(3 * bucket_count() / 2));
                         index = bucket(k);
                     }
-                    
-                    new(m_data + index) value_type{ std::move(k), mapped_type{} };
-                    
-                    m_set[index] = 1;
                 }
 
                 return (m_data + index)->second;
@@ -834,21 +886,20 @@ namespace fefu
             mapped_type& at(const key_type& k) {
                 size_type index = bucket(k);
 
-                if (m_set[index] == 0)
+                if (m_set[index] != USE)
                     throw std::out_of_range("Error: index out of range!");
-
-                return (m_data + index)->second;
+                
+                return m_data[index].second;    
             }
 
             const mapped_type& at(const key_type& k) const {
                 size_type index = bucket(k);
 
-                if (!m_set[index]) {
+                if (m_set[index] != USE)
                     throw std::out_of_range("Error: index out of range!");
-                }
 
-                const mapped_type& r = (m_data + index)->second;
-                return r;
+                const mapped_type& t = m_data[index].second;
+                return t;
             }
             //@}
 
@@ -865,7 +916,29 @@ namespace fefu
             * @return  The key bucket index.
             */
             size_type bucket(const key_type& _K) const {
-                return m_hash(_K) % m_set.size(); 
+                size_type h1 = m_hash(_K) % m_set.size();
+                size_type h2 = m_hash(_K) % (m_set.size() - 1) + 1;
+
+                size_type first_del = -1;
+
+                size_type i = 0;
+                while (i < m_set.size()) {
+                    if (first_del == -1 && m_set[h1] == DEL)
+                        first_del = h1;
+
+                    if (m_set[h1] == EMPTY)
+                        break;
+
+                    if (m_set[h1] == USE && m_data[h1].first == _K)
+                        return h1;
+
+                    h1 = (h1 + h2) % m_set.size();
+                    i++;
+                }
+                
+                if (first_del == -1)
+                    return h1;
+                return first_del;
             }
 
             // hash policy.
@@ -897,15 +970,16 @@ namespace fefu
              *  %hash_map maximum load factor.
              */
             void rehash(size_type n) {
-                if (static_cast<float>(use_size) / m_set.size() > max_load_factor())
+                auto new_load_factor = static_cast<float>(use_size) / m_set.size();
+                if (new_load_factor > max_load_factor())
                     return;
 
                 hash_map hash_m(n);
-                hash_m.max_load_factor(max_load_factor_);
-                
                 for (auto it = begin(); it != end(); it++) {
                     hash_m.insert(*it);
                 }
+
+                *this = hash_m;
             }
 
             /**
@@ -929,6 +1003,20 @@ namespace fefu
             }
 
         private:
+            size_type next_prime(size_type n) {
+                auto is_prime = [](const size_type& n1) {
+                    for (size_type i = 2; i * i <= n1; i++)
+                        if (n % i == 0)
+                            return false;
+                    return true;
+                };
+
+                while (!is_prime(n)) {
+                    n++;
+                }
+
+                return n;
+            }
 
             allocator_type m_allocator;
             hasher m_hash;
