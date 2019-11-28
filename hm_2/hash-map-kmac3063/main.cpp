@@ -690,6 +690,118 @@ TEST_CASE("oper ==") {
     REQUIRE((mapa1 == mapa3) == false);
 
     mapa3[2] = 2;
-    mapa3[5] = 5;
+    mapa3[5] = 5;    
     REQUIRE((mapa1 == mapa2) == true);
+}
+struct custom_hash
+{
+    vector<long long unsigned int> rnd;
+
+    custom_hash()
+    {
+        for (int i = 0; i < 1000000; ++i)
+            rnd.push_back(rand());
+    }
+
+    long long unsigned int operator()(int i) const
+    {
+        return rnd[i];
+    }
+};
+template<typename TimePoint>
+class time_meter
+{
+public:
+    using time_point = TimePoint;
+
+private:
+    std::function<time_point()> m_fnow;
+    std::function<double(time_point, time_point)> m_fsec;
+    time_point m_begin;
+    time_point m_stop;
+    bool m_stopped;
+
+public:
+    template<typename FNow, typename FSec>
+    time_meter(FNow&& now, FSec&& sec) : m_fnow(std::forward<FNow>(now)), m_fsec(std::forward<FSec>(sec)), m_begin(m_fnow()), m_stopped(false) { }
+
+    double seconds() const
+    {
+        if (m_stopped)
+            return m_fsec(m_begin, m_stop);
+        return m_fsec(m_begin, m_fnow());
+    }
+
+    void restart()
+    {
+        m_stopped = false;
+        m_begin = m_fnow();
+    }
+
+    void stop()
+    {
+        if (m_stopped)
+            return;
+        m_stop = m_fnow();
+        m_stopped = true;
+    }
+
+    void start()
+    {
+        if (!m_stopped)
+            return;
+        m_stopped = false;
+        m_begin += m_fnow() - m_stop;
+    }
+};
+
+
+auto create_tm()
+{
+    using tm_type = time_meter<std::chrono::high_resolution_clock::time_point>;
+
+    static const auto get_sec = [](tm_type::time_point p1, tm_type::time_point p2)
+    {
+        return static_cast<double>((p2 - p1).count()) / std::chrono::high_resolution_clock::period::den;
+    };
+
+    return tm_type(std::chrono::high_resolution_clock::now, get_sec);
+}
+
+TEST_CASE("_stress")
+{
+    auto tm = create_tm();
+    hash_map<int, int, custom_hash> m(1000000);
+    m.max_load_factor(0.1f);
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({ i, i * 3 });
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({ i, i * 3 });
+    }
+    for (int i = 0; i < 1000000; ++i)
+    {
+        m.insert({ i, i * 3 });
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 100; i < 999999; ++i)
+    {
+        m.erase(i);
+    }
+    for (int i = 0; i < 100; ++i)
+        REQUIRE(m[i] == i * 3);
+    REQUIRE(m[999999] == 2999997);
+    REQUIRE(m.size() == 101);
+    for (int i = 0; i < 1000; ++i)
+        m.insert({ rand() % 1000000, rand() });
+    cout << "**********\n" << "STRESS TIME = " << tm.seconds() << "\n**********" << endl;
 }
