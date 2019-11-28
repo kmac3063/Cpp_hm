@@ -1,0 +1,1132 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>hash_map.hpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+#pragma once
+
+#include &lt;functional&gt;
+#include &lt;memory&gt;
+#include &lt;utility&gt;
+#include &lt;type_traits&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+
+namespace fefu
+{
+    #define EMPTY 0
+    #define USE 1
+    #define DEL 2
+    
+    template&lt;typename T&gt;
+    class allocator {
+    public:
+        using size_type = std::size_t;
+        using difference_type = std::ptrdiff_t;
+        using pointer = T*;
+        using const_pointer = const T*;
+        using reference = typename std::add_lvalue_reference&lt;T&gt;::type;
+        using const_reference = typename std::add_lvalue_reference&lt;const T&gt;::type;
+        using value_type = T;
+
+        allocator() noexcept = default;
+
+        allocator(const allocator&amp;) noexcept = default;
+
+        template &lt;class U&gt;
+        allocator(const allocator&lt;U&gt;&amp;) noexcept {};
+
+        ~allocator() = default;
+
+<span style = "background-color:#dfd">        pointer allocate(size_type size) {
+            return static_cast&lt;pointer&gt;(::operator new(size * sizeof(value_type)));
+        }</span>
+
+<span style = "background-color:#dfd">        void deallocate(pointer p, size_type n) noexcept {
+            ::operator delete(p, n);
+        }</span>
+
+<span style = "background-color:#dfd">        void setSeed(const int&amp; s) {
+            seed = s;
+        }</span>
+
+<span style = "background-color:#dfd">        int getSeed() {
+            return seed;
+        }</span>
+    private:
+<span style = "background-color:#dfd">        int seed = 0;</span>
+    };
+
+    template&lt;typename K, typename T,
+        typename Hash,
+        typename Pred,
+        typename Alloc&gt;
+        class hash_map;
+
+    template&lt;typename ValueType&gt;
+    class hash_map_const_iterator;
+
+    template&lt;typename ValueType&gt;
+    class hash_map_iterator {
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = ValueType;
+        using difference_type = std::ptrdiff_t;
+        using reference = ValueType&amp;;
+        using pointer = ValueType*;
+
+        hash_map_iterator() noexcept = default;
+        hash_map_iterator(const hash_map_iterator&amp; other) noexcept : 
+<span style = "background-color:#dfd">            p(other.p), 
+            s(other.s),
+            i(other.i) {}</span>
+
+<span style = "background-color:#dfd">        reference operator*() const {
+            return *p;
+        }
+        pointer operator-&gt;() const {
+            return p;
+        }</span>
+
+        // prefix ++
+<span style = "background-color:#dfd">        hash_map_iterator&amp; operator++() {
+            if (i &gt;= s-&gt;size())</span>
+<span style = "background-color:#fdd">                throw;</span>
+
+<span style = "background-color:#dfd">            i++;
+            p++;
+            while (i &lt; s-&gt;size() &amp;&amp; (*s)[i] != USE) {
+                i++;
+                p++;
+            }</span>
+
+<span style = "background-color:#dfd">            return *this;
+        }</span>
+        // postfix ++
+<span style = "background-color:#dfd">        hash_map_iterator operator++(int) {
+            hash_map_iterator t(*this);</span>
+
+<span style = "background-color:#dfd">            if (i &gt;= s-&gt;size())</span>
+<span style = "background-color:#fdd">                throw;</span>
+
+<span style = "background-color:#dfd">            i++;
+            p++;
+            while (i &lt; s-&gt;size() &amp;&amp; (*s)[i] != USE) {
+                i++;
+                p++;
+            }</span>
+
+<span style = "background-color:#dfd">            return t;
+        }</span>
+
+<span style = "background-color:#dfd">        friend bool operator==(const hash_map_iterator&lt;ValueType&gt;&amp; a, const hash_map_iterator&lt;ValueType&gt;&amp; b) {
+            return &amp;*a == &amp;*b;
+        }</span>
+
+<span style = "background-color:#dfd">        friend bool operator!=(const hash_map_iterator&lt;ValueType&gt;&amp; a, const hash_map_iterator&lt;ValueType&gt;&amp; b) {
+            return &amp;*a != &amp;*b;
+        }</span>
+
+        template&lt;typename ValueType&gt;
+        friend class hash_map_const_iterator;
+
+        template&lt;typename K, typename T,
+            typename Hash,
+            typename Pred,
+            typename Alloc&gt;
+            friend class hash_map;
+    private:
+        hash_map_iterator(pointer p_, std::vector&lt;char&gt;* s_, size_t i_) noexcept : 
+<span style = "background-color:#dfd">            i(i_),
+            p(p_ + i_),
+            s(s_) {}</span>
+
+        size_t i = 0;
+        pointer p = 0;
+        std::vector&lt;char&gt;* s;
+    };
+
+    template&lt;typename ValueType&gt;
+    class hash_map_const_iterator {
+        // Shouldn't give non const references on value
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = ValueType;
+        using difference_type = std::ptrdiff_t;
+        using reference = const ValueType&amp;;
+        using pointer = const ValueType*;
+
+        hash_map_const_iterator() noexcept {};
+        hash_map_const_iterator(const hash_map_const_iterator&amp; other) noexcept : 
+<span style = "background-color:#dfd">            p(other.p), 
+            s(other.s), 
+            i(other.i) {};</span>
+        hash_map_const_iterator(const hash_map_iterator&lt;ValueType&gt;&amp; other) noexcept :
+<span style = "background-color:#dfd">            p(other.p),
+            s(other.s),
+            i(other.i) {};</span>
+
+<span style = "background-color:#dfd">        reference operator*() const {
+            return *p;
+        }
+        pointer operator-&gt;() const {
+            return p;
+        }</span>
+
+        // prefix ++
+<span style = "background-color:#dfd">        hash_map_const_iterator&amp; operator++() {
+            if (i &gt;= s-&gt;size())</span>
+<span style = "background-color:#fdd">                throw;</span>
+
+<span style = "background-color:#dfd">            i++;
+            p++;
+            while (i &lt; s-&gt;size() &amp;&amp; (*s)[i] != USE) {
+                i++;
+                p++;
+            }</span>
+
+<span style = "background-color:#dfd">            return *this;
+        }</span>
+        // postfix ++
+<span style = "background-color:#dfd">        hash_map_const_iterator operator++(int) {
+            hash_map_const_iterator t(*this);</span>
+
+<span style = "background-color:#dfd">            if (i &gt;= s-&gt;size())</span>
+<span style = "background-color:#fdd">                throw;</span>
+
+<span style = "background-color:#dfd">            i++;
+            p++;
+            while (i &lt; s-&gt;size() &amp;&amp; (*s)[i] != USE) {
+                i++;
+                p++;
+            }</span>
+
+<span style = "background-color:#dfd">            return t;
+        }</span>
+
+
+<span style = "background-color:#dfd">        friend bool operator==(const hash_map_const_iterator&lt;ValueType&gt;&amp; a, const hash_map_const_iterator&lt;ValueType&gt;&amp; b) {
+            return &amp;*a == &amp;*b;
+        }
+        friend bool operator!=(const hash_map_const_iterator&lt;ValueType&gt;&amp; a, const hash_map_const_iterator&lt;ValueType&gt;&amp; b) {
+            return &amp;*a != &amp;*b;
+        }</span>
+
+        template&lt;typename K, typename T,
+            typename Hash,
+            typename Pred,
+            typename Alloc&gt;
+            friend class hash_map;
+
+    private:
+        hash_map_const_iterator(pointer p_, const std::vector&lt;char&gt;* s_, const size_t i_) noexcept : 
+<span style = "background-color:#dfd">            i(i_),
+            p(p_ + i_),
+            s(s_) {}</span>
+
+        size_t i = 0;
+        pointer p = 0;
+        const std::vector&lt;char&gt;* s;
+    };
+
+    template&lt;typename K, typename T,
+        typename Hash = std::hash&lt;K&gt;,
+        typename Pred = std::equal_to&lt;K&gt;,
+        typename Alloc = allocator&lt;std::pair&lt;const K, T&gt;&gt;&gt;
+        class hash_map {
+        public:
+            using key_type = K;
+            using mapped_type = T;
+            using hasher = Hash;
+            using key_equal = Pred;
+            using allocator_type = Alloc;
+            using value_type = std::pair&lt;const key_type, mapped_type&gt;;
+            using reference = value_type&amp;;
+            using const_reference = const value_type&amp;;
+            using iterator = hash_map_iterator&lt;value_type&gt;;
+            using const_iterator = hash_map_const_iterator&lt;value_type&gt;;
+            using size_type = std::size_t;
+
+<span style = "background-color:#dfd">            const float BASE_LOAD_FACTOR = 0.5555555f;</span>
+            /// Default constructor.
+            hash_map() = default;
+
+            /**
+             *  @brief  Default constructor creates no elements.
+             *  @param n  Minimal initial number of buckets.
+             */
+            explicit hash_map(size_type n) :
+<span style = "background-color:#dfd">                m_set(n, 0),
+                m_data(m_allocator.allocate(n)) {}</span>
+
+            /**
+             *  @brief  Builds an %hash_map from a range.
+             *  @param  first  An input iterator.
+             *  @param  last  An input iterator.
+             *  @param  n  Minimal initial number of buckets.
+             *
+             *  Create an %hash_map consisting of copies of the elements from
+             *  [first,last).  This is linear in N (where N is
+             *  distance(first,last)).
+             */
+            template&lt;typename InputIterator&gt;
+            hash_map(InputIterator first, InputIterator last,
+<span style = "background-color:#dfd">                size_type n = 0) {
+                if (n &lt; 1)
+                    n = 1;
+                hash_map map(n);
+                for (auto it = first; it != last; it++)
+                    map.insert(*it);
+                *this = map;
+            }</span>
+
+            /// Copy constructor.
+            hash_map(const hash_map&amp; m) :
+<span style = "background-color:#dfd">                m_set(m.m_set),
+                m_allocator(m.get_allocator()),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(m.hash_function()),
+                m_key_equal(m.key_eq()),
+                use_size(m.size()) {</span>
+
+<span style = "background-color:#dfd">                max_load_factor(m.max_load_factor());
+                memcpy(m_data, m.m_data, m.m_set.size() * sizeof(value_type));
+            }</span>
+            /// Move constructor.
+            hash_map(hash_map&amp;&amp; m) :
+<span style = "background-color:#dfd">                m_set(std::move(m.m_set)),
+                m_allocator(std::move(m.get_allocator())),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(std::move(m.hash_function())),
+                m_key_equal(std::move(m.key_eq())),
+                use_size(std::move(m.size())) {</span>
+
+<span style = "background-color:#dfd">                max_load_factor(std::move(m.max_load_factor()));
+                memmove(m_data, m.m_data, m.m_set.size() * sizeof(value_type));
+            }</span>
+
+            /**
+             *  @brief Creates an %hash_map with no elements.
+             *  @param a An allocator object.
+             */
+<span style = "background-color:#dfd">            explicit hash_map(const allocator_type&amp; a) {
+                m_allocator = a;
+            }</span>
+
+            /*
+            *  @brief Copy constructor with allocator argument.
+            * @param  uset  Input %hash_map to copy.
+            * @param  a  An allocator object.
+            */
+            hash_map(const hash_map&amp; m,
+                const allocator_type&amp; a) :
+<span style = "background-color:#dfd">                m_set(m.m_set),
+                m_allocator(a),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(m.hash_function()),
+                m_key_equal(m.key_eq()),
+                use_size(m.size()) {</span>
+
+<span style = "background-color:#dfd">                max_load_factor(m.max_load_factor());
+                memcpy(m_data, m.m_data, m.m_set.size() * sizeof(value_type));
+            }</span>
+            /*
+            *  @brief  Move constructor with allocator argument.
+            *  @param  uset Input %hash_map to move.
+            *  @param  a    An allocator object.
+            */
+            hash_map(hash_map&amp;&amp; m,
+                const allocator_type&amp; a) :
+
+<span style = "background-color:#dfd">                m_set(std::move(m.m_set)),
+                m_allocator(a),
+                m_data(m_allocator.allocate(m.m_set.size())),
+                m_hash(std::move(m.hash_function())),
+                m_key_equal(std::move(m.key_eq())),
+                use_size(std::move(m.size())) {</span>
+
+<span style = "background-color:#dfd">                max_load_factor(std::move(m.max_load_factor()));
+                memmove(m_data, m.m_data, m.m_set.size() * sizeof(value_type));
+            }</span>
+            /**
+             *  @brief  Builds an %hash_map from an initializer_list.
+             *  @param  l  An initializer_list.
+             *  @param n  Minimal initial number of buckets.
+             *
+             *  Create an %hash_map consisting of copies of the elements in the
+             *  list. This is linear in N (where N is @a l.size()).
+             */
+<span style = "background-color:#dfd">            hash_map(std::initializer_list&lt;value_type&gt; l,
+                size_type n = 0) {
+                if (n &lt; 1)
+                    n = 1;
+                hash_map map(n);
+                for (auto el : l)
+                    map.insert(el);
+                *this = map;
+            }</span>
+
+<span style = "background-color:#dfd">            ~hash_map() {
+                m_allocator.deallocate(m_data, m_set.size());
+            }</span>
+
+            /// Copy assignment operator.
+<span style = "background-color:#dfd">            hash_map&amp; operator=(const hash_map&amp; m) {
+                m_allocator.deallocate(m_data, m_set.size());</span>
+
+<span style = "background-color:#dfd">                m_set = m.m_set;
+                m_allocator = m.m_allocator;
+                m_data = m_allocator.allocate(m.m_set.size());</span>
+                
+<span style = "background-color:#dfd">                m_hash = m.hash_function();
+                m_key_equal = m.key_eq();
+                use_size = m.size();
+                max_load_factor(m.max_load_factor());
+                memcpy(m_data, m.m_data, m.m_set.size() * sizeof(value_type) );</span>
+
+<span style = "background-color:#dfd">                return *this;
+            }</span>
+
+            /// Move assignment operator.
+            hash_map&amp; operator=(hash_map&amp;&amp; m) {
+                m_allocator.deallocate(m_data, m_set.size());
+
+                m_set = std::move(m.m_set);
+                m_allocator = std::move(m.m_allocator);
+                m_data = m_allocator.allocate(m.m_set.size());
+
+                m_hash = std::move(m.hash_function());
+                m_key_equal = std::move(m.key_eq());
+                use_size = m.size();
+                max_load_factor(m.max_load_factor());
+
+                memmove(m_data, m.m_data, m.m_set.size() * sizeof(value_type));
+                return *this;
+            }
+
+            /**
+             *  @brief  %hash_map list assignment operator.
+             *  @param  l  An initializer_list.
+             *
+             *  This function fills an %hash_map with copies of the elements in
+             *  the initializer list @a l.
+             *
+             *  Note that the assignment completely changes the %hash_map and
+             *  that the resulting %hash_map's size is the same as the number
+             *  of elements assigned.
+             */
+            hash_map&amp; operator=(std::initializer_list&lt;value_type&gt; l) {
+                hash_map map(l.size());
+                for (auto el : l)
+                    map.insert(el);
+                return *this = map;
+            }
+
+            ///  Returns the allocator object used by the %hash_map.
+<span style = "background-color:#dfd">            allocator_type get_allocator() const noexcept {
+                return m_allocator;
+            }</span>
+
+            // size and capacity:
+
+            ///  Returns true if the %hash_map is empty.
+<span style = "background-color:#dfd">            bool empty() const noexcept {
+                return use_size == 0;
+            }</span>
+
+            ///  Returns the size of the %hash_map.
+<span style = "background-color:#dfd">            size_type size() const noexcept {
+                return use_size;
+            }</span>
+
+            ///  Returns the maximum size of the %hash_map.
+<span style = "background-color:#dfd">            size_type max_size() const noexcept {
+                return UINT32_MAX;
+            }</span>
+
+            // iterators.
+
+            /**
+             *  Returns a read/write iterator that points to the first element in the
+             *  %hash_map.
+             */
+<span style = "background-color:#dfd">            iterator begin() noexcept {
+                size_type i = 0;
+                while (i &lt; m_set.size() &amp;&amp; m_set[i] != USE)
+                    i++;</span>
+
+<span style = "background-color:#dfd">                return iterator(m_data, &amp;m_set, i);
+            };</span>
+
+
+            //@{
+            /**
+             *  Returns a read-only (constant) iterator that points to the first
+             *  element in the %hash_map.
+             */
+<span style = "background-color:#dfd">            const_iterator begin() const noexcept {
+                size_type i = 0;
+                while (i &lt; m_set.size() &amp;&amp; m_set[i] != USE)</span>
+<span style = "background-color:#fdd">                    i++;</span>
+
+<span style = "background-color:#dfd">                return const_iterator(m_data, &amp;m_set, i);
+            }</span>
+
+<span style = "background-color:#dfd">            const_iterator cbegin() const noexcept {
+                size_type i = 0;
+                while (i &lt; m_set.size() &amp;&amp; m_set[i] != USE)</span>
+<span style = "background-color:#fdd">                    i++;</span>
+
+<span style = "background-color:#dfd">                return const_iterator(m_data, &amp;m_set, i);
+            }</span>
+
+            /**
+             *  Returns a read/write iterator that points one past the last element in
+             *  the %hash_map.
+             */
+<span style = "background-color:#dfd">            iterator end() noexcept {
+                return iterator(m_data, &amp;m_set, m_set.size());
+            }</span>
+
+            //@{
+            /**
+             *  Returns a read-only (constant) iterator that points one past the last
+             *  element in the %hash_map.
+             */
+<span style = "background-color:#dfd">            const_iterator end() const noexcept {
+                return const_iterator(m_data, &amp;m_set, m_set.size());
+            }</span>
+
+<span style = "background-color:#dfd">            const_iterator cend() const noexcept {
+                return const_iterator(m_data, &amp;m_set, m_set.size());
+            }</span>
+            //@}
+
+            // modifiers.
+
+            /**
+             *  @brief Attempts to build and insert a std::pair into the
+             *  %hash_map.
+             *
+             *  @param args  Arguments used to generate a new pair instance (see
+             *	        std::piecewise_contruct for passing arguments to each
+            *	        part of the pair constructor).
+            *
+            *  @return  A pair, of which the first element is an iterator that points
+            *           to the possibly inserted pair, and the second is a bool that
+            *           is true if the pair was actually inserted.
+            *
+            *  This function attempts to build and insert a (key, value) %pair into
+            *  the %hash_map.
+            *  An %hash_map relies on unique keys and thus a %pair is only
+            *  inserted if its first element (the key) is not already present in the
+            *  %hash_map.
+            *
+            *  Insertion requires amortized constant time. 
+            */
+            template&lt;typename... _Args&gt;
+            std::pair&lt;iterator, bool&gt; emplace(_Args&amp;&amp;... args);
+
+            /**
+             *  @brief Attempts to build and insert a std::pair into the
+             *  %hash_map.
+             *
+             *  @param k    Key to use for finding a possibly existing pair in
+             *                the hash_map.
+             *  @param args  Arguments used to generate the .second for a
+             *                new pair instance.
+             *
+             *  @return  A pair, of which the first element is an iterator that points
+             *           to the possibly inserted pair, and the second is a bool that
+             *           is true if the pair was actually inserted.
+             *
+             *  This function attempts to build and insert a (key, value) %pair into
+             *  the %hash_map.
+             *  An %hash_map relies on unique keys and thus a %pair is only
+             *  inserted if its first element (the key) is not already present in the
+             *  %hash_map.
+             *  If a %pair is not inserted, this function has no effect.
+             *
+             *  Insertion requires amortized constant time.
+             */
+            template &lt;typename... _Args&gt;
+            std::pair&lt;iterator, bool&gt; try_emplace(const key_type&amp; k, _Args&amp;&amp;... args);
+
+            // move-capable overload
+            template &lt;typename... _Args&gt;
+            std::pair&lt;iterator, bool&gt; try_emplace(key_type&amp;&amp; k, _Args&amp;&amp;... args);
+
+            //@{
+            /**
+            *  @brief Attempts to insert a std::pair into the %hash_map.
+            *  @param x Pair to be inserted (see std::make_pair for easy
+            *	     creation of pairs).
+            *
+            *  @return  A pair, of which the first element is an iterator that
+            *           points to the possibly inserted pair, and the second is
+            *           a bool that is true if the pair was actually inserted.
+            *
+            *  This function attempts to insert a (key, value) %pair into the
+            *  %hash_map. An %hash_map relies on unique keys and thus a
+            *  %pair is only inserted if its first element (the key) is not already
+            *  present in the %hash_map.
+            *
+            *  Insertion requires amortized constant time.
+            */
+<span style = "background-color:#dfd">            std::pair&lt;iterator, bool&gt; insert(const value_type&amp; x) {
+                if (bucket_count() &lt; 3)
+                    rehash(3);
+                size_type index = bucket(x.first);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] == USE) {
+                    return std::make_pair(iterator(m_data, &amp;m_set, index), false);</span>
+                }
+
+<span style = "background-color:#dfd">                m_set[index] = USE;
+                new(m_data + index) value_type{ x.first, x.second };
+                use_size++;</span>
+
+<span style = "background-color:#dfd">                if (load_factor() &gt; max_load_factor()) {
+                    rehash(next_prime(3 * bucket_count() / 2));
+                    index = bucket(x.first);</span>
+                }
+                
+<span style = "background-color:#dfd">                return std::make_pair(iterator(m_data, &amp;m_set, index), true);
+            }</span>
+
+<span style = "background-color:#dfd">            std::pair&lt;iterator, bool&gt; insert(value_type&amp;&amp; x) {
+                if (bucket_count() &lt; 3)
+                    rehash(3);
+                size_type index = bucket(x.first);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] == USE) {
+                    return std::make_pair(iterator(m_data, &amp;m_set, index), false);</span>
+                }
+
+<span style = "background-color:#dfd">                m_set[index] = USE;
+                new(m_data + index) value_type{ x.first, x.second };
+                use_size++;</span>
+
+<span style = "background-color:#dfd">                if (load_factor() &gt; max_load_factor()) {
+                    rehash(next_prime(3 * bucket_count() / 2));
+                    index = bucket(x.first);</span>
+                }
+
+<span style = "background-color:#dfd">                return std::make_pair(iterator(m_data, &amp;m_set, index), true);
+            }</span>
+
+            //@}
+
+            /**
+             *  @brief A template function that attempts to insert a range of
+             *  elements.
+             *  @param  first  Iterator pointing to the start of the range to be
+             *                   inserted.
+             *  @param  last  Iterator pointing to the end of the range.
+             *
+             *  Complexity similar to that of the range constructor.
+             */
+            template&lt;typename _InputIterator&gt;
+<span style = "background-color:#dfd">            void insert(_InputIterator first, _InputIterator last) {
+                for (auto it = first; it != last; it++) {
+                    insert(*it);
+                }
+            }</span>
+
+            /**
+             *  @brief Attempts to insert a list of elements into the %hash_map.
+             *  @param  l  A std::initializer_list&lt;value_type&gt; of elements
+             *               to be inserted.
+             *
+             *  Complexity similar to that of the range constructor.
+             */
+<span style = "background-color:#dfd">            void insert(std::initializer_list&lt;value_type&gt; l) {
+                for (auto it = l.begin(); it != l.end(); it++){
+                    insert(*it);
+                }
+            }</span>
+
+
+            /**
+             *  @brief Attempts to insert a std::pair into the %hash_map.
+             *  @param k    Key to use for finding a possibly existing pair in
+             *                the map.
+             *  @param obj  Argument used to generate the .second for a pair
+             *                instance.
+             *
+             *  @return  A pair, of which the first element is an iterator that
+             *           points to the possibly inserted pair, and the second is
+             *           a bool that is true if the pair was actually inserted.
+             *
+             *  This function attempts to insert a (key, value) %pair into the
+             *  %hash_map. An %hash_map relies on unique keys and thus a
+             *  %pair is only inserted if its first element (the key) is not already
+             *  present in the %hash_map.
+             *  If the %pair was already in the %hash_map, the .second of
+             *  the %pair is assigned from obj.
+             *
+             *  Insertion requires amortized constant time.
+             */
+            template &lt;typename _Obj&gt;
+<span style = "background-color:#dfd">            std::pair&lt;iterator, bool&gt; insert_or_assign(const key_type&amp; k, _Obj&amp;&amp; obj) {
+                if (bucket_count() &lt; 3)</span>
+<span style = "background-color:#fdd">                    rehash(3);</span>
+<span style = "background-color:#dfd">                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                bool ans = true;</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] == USE) {
+                    ans = false;</span>
+                    m_data[index].~value_type();
+<span style = "background-color:#dfd">                    use_size--;</span>
+                }
+
+<span style = "background-color:#dfd">                m_set[index] = USE;
+                new(m_data + index) value_type{ k, obj };
+                use_size++;</span>
+
+<span style = "background-color:#dfd">                if (load_factor() &gt; max_load_factor()) {</span>
+<span style = "background-color:#fdd">                    rehash(next_prime(3 * bucket_count() / 2));
+                    index = bucket(k);</span>
+                }
+
+<span style = "background-color:#dfd">                return std::make_pair(iterator(m_data, &amp;m_set, index), ans);
+            }</span>
+
+            // move-capable overload
+            template &lt;typename _Obj&gt;
+<span style = "background-color:#dfd">            std::pair&lt;iterator, bool&gt; insert_or_assign(key_type&amp;&amp; k, _Obj&amp;&amp; obj) {
+                if (bucket_count() &lt; 3)</span>
+<span style = "background-color:#fdd">                    rehash(3);</span>
+<span style = "background-color:#dfd">                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                bool ans = true;</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] == USE) {
+                    ans = false;</span>
+                    m_data[index].~value_type();
+<span style = "background-color:#dfd">                    use_size--;</span>
+                }
+
+<span style = "background-color:#dfd">                m_set[index] = USE;
+                new(m_data + index) value_type{ k, std::move(obj) };
+                use_size++;</span>
+
+<span style = "background-color:#dfd">                if (load_factor() &gt; max_load_factor()) {</span>
+<span style = "background-color:#fdd">                    rehash(next_prime(3 * bucket_count() / 2));
+                    index = bucket(k);</span>
+                }
+
+<span style = "background-color:#dfd">                return std::make_pair(iterator(m_data, &amp;m_set, index), ans);
+            }</span>
+
+            //@{
+            /**
+             *  @brief Erases an element from an %hash_map.
+             *  @param  position  An iterator pointing to the element to be erased.
+             *  @return An iterator pointing to the element immediately following
+             *          @a position prior to the element being erased. If no such
+             *          element exists, end() is returned.
+             *
+             *  This function erases an element, pointed to by the given iterator,
+             *  from an %hash_map.
+             *  Note that this function only erases the element, and that if the
+             *  element is itself a pointer, the pointed-to memory is not touched in
+             *  any way.  Managing the pointer is the user's responsibility.
+             */
+<span style = "background-color:#dfd">            iterator erase(const_iterator position) {
+                if (erase(position-&gt;first) == 1) {
+                    if (++position == end())
+                        return end();</span>
+<span style = "background-color:#fdd">                    return iterator(m_data, &amp;m_set, position.i);</span>
+                }
+<span style = "background-color:#dfd">                return end();
+            }</span>
+
+            // LWG 2059.
+<span style = "background-color:#dfd">            iterator erase(iterator position) {
+                if (erase(position-&gt;first) == 1)
+                    return ++position;
+                return end();
+            }</span>
+            //@}
+
+            /**
+             *  @brief Erases elements according to the provided key.
+             *  @param  x  Key of element to be erased.
+             *  @return  The number of elements erased.
+             *
+             *  This function erases all the elements located by the given key from
+             *  an %hash_map. For an %hash_map the result of this function
+             *  can only be 0 (not present) or 1 (present).
+             *  Note that this function only erases the element, and that if the
+             *  element is itself a pointer, the pointed-to memory is not touched in
+             *  any way.  Managing the pointer is the user's responsibility.
+             */
+<span style = "background-color:#dfd">            size_type erase(const key_type&amp; x) {
+                size_type index = bucket(x);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE)
+                    return 0;</span>
+                
+<span style = "background-color:#dfd">                m_set[index] = DEL;
+                use_size--;</span>
+                
+<span style = "background-color:#dfd">                return 1;
+            }</span>
+
+            /**
+             *  @brief Erases a [first,last) range of elements from an
+             *  %hash_map.
+             *  @param  first  Iterator pointing to the start of the range to be
+             *                  erased.
+             *  @param last  Iterator pointing to the end of the range to
+             *                be erased.
+             *  @return The iterator @a last.
+             *
+             *  This function erases a sequence of elements from an %hash_map.
+             *  Note that this function only erases the elements, and that if
+             *  the element is itself a pointer, the pointed-to memory is not touched
+             *  in any way.  Managing the pointer is the user's responsibility.
+             */
+<span style = "background-color:#dfd">            iterator erase(const_iterator first, const_iterator last) {
+                auto tlast = first;
+                for (auto it = first; it != last; it++) {
+                    if (erase(it-&gt;first) == 1)
+                        tlast = it;
+                }</span>
+
+<span style = "background-color:#dfd">                if (++tlast == end())
+                    return end();
+                return iterator(m_data, &amp;m_set, tlast.i);
+            }</span>
+
+            /**
+             *  Erases all elements in an %hash_map.
+             *  Note that this function only erases the elements, and that if the
+             *  elements themselves are pointers, the pointed-to memory is not touched
+             *  in any way.  Managing the pointer is the user's responsibility.
+             */
+<span style = "background-color:#dfd">            void clear() noexcept {
+                m_allocator.deallocate(m_data, m_set.size());
+                m_data = m_allocator.allocate(m_set.size());
+                use_size = 0;
+                m_set.clear();
+            }</span>
+
+            /**
+             *  @brief  Swaps data with another %hash_map.
+             *  @param  x  An %hash_map of the same element and allocator
+             *  types.
+             *
+             *  This exchanges the elements between two %hash_map in constant
+             *  time.
+             *  Note that the global std::swap() function is specialized such that
+             *  std::swap(m1,m2) will feed to this function.
+             */
+<span style = "background-color:#dfd">            void swap(hash_map&amp; x) {
+                hash_map temp_map(*this);
+                *this = x;
+                x = temp_map;
+            }</span>
+
+            template&lt;typename _H2, typename _P2&gt;
+            void merge(hash_map&lt;K, T, _H2, _P2, Alloc&gt;&amp; source);
+
+            template&lt;typename _H2, typename _P2&gt;
+            void merge(hash_map&lt;K, T, _H2, _P2, Alloc&gt;&amp;&amp; source);
+
+            // observers.
+
+            ///  Returns the hash functor object with which the %hash_map was
+            ///  constructed.
+<span style = "background-color:#dfd">            Hash hash_function() const {
+                return m_hash;
+            }</span>
+
+            ///  Returns the key comparison object with which the %hash_map was
+            ///  constructed.
+<span style = "background-color:#dfd">            Pred key_eq() const {
+                return m_key_equal;
+            }</span>
+
+            // lookup.
+
+            //@{
+            /**
+             *  @brief Tries to locate an element in an %hash_map.
+             *  @param  x  Key to be located.
+             *  @return  Iterator pointing to sought-after element, or end() if not
+             *           found.
+             *
+             *  This function takes a key and tries to locate the element with which
+             *  the key matches.  If successful the function returns an iterator
+             *  pointing to the sought after element.  If unsuccessful it returns the
+             *  past-the-end ( @c end() ) iterator.
+             */
+<span style = "background-color:#dfd">            iterator find(const key_type&amp; x) {
+                size_type index = bucket(x);</span>
+                
+<span style = "background-color:#dfd">                if (m_set[index] != USE)
+                    return end();</span>
+
+<span style = "background-color:#dfd">                return iterator(m_data, &amp;m_set, index);
+            }</span>
+
+<span style = "background-color:#dfd">            const_iterator find(const key_type&amp; x) const {
+                size_type index = bucket(x);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE)
+                    return end();</span>
+                
+<span style = "background-color:#dfd">                return const_iterator(m_data, &amp;m_set, index);
+            }</span>
+            //@}
+
+            /**
+             *  @brief  Finds the number of elements.
+             *  @param  x  Key to count.
+             *  @return  Number of elements with specified key.
+             *
+             *  This function only makes sense for %unordered_multimap; for
+             *  %hash_map the result will either be 0 (not present) or 1
+             *  (present).
+             */
+<span style = "background-color:#dfd">            size_type count(const key_type&amp; x) const {
+                return (m_set[bucket(x)] == USE);
+            }</span>
+
+            /**
+             *  @brief  Finds whether an element with the given key exists.
+             *  @param  x  Key of elements to be located.
+             *  @return  True if there is any element with the specified key.
+             */
+<span style = "background-color:#dfd">            bool contains(const key_type&amp; x) const {
+                return (m_set[bucket(x)] == USE);
+            }</span>
+
+            //@{
+            /**
+             *  @brief  Subscript ( @c [] ) access to %hash_map data.
+             *  @param  k  The key for which data should be retrieved.
+             *  @return  A reference to the data of the (key,data) %pair.
+             *
+             *  Allows for easy lookup with the subscript ( @c [] )operator.  Returns
+             *  data associated with the key specified in subscript.  If the key does
+             *  not exist, a pair with that key is created using default values, which
+             *  is then returned.
+             *
+             *  Lookup requires constant time.
+             */
+<span style = "background-color:#dfd">            mapped_type&amp; operator[](const key_type&amp; k) {
+                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE) {
+                    if (m_set[index] == DEL) {</span>
+                        m_data[index].~value_type();
+                    }
+<span style = "background-color:#dfd">                    use_size++;
+                    m_set[index] = USE;</span>
+
+<span style = "background-color:#dfd">                    new(m_data + index) value_type{ k, mapped_type{} };</span>
+
+<span style = "background-color:#dfd">                    if (load_factor() &gt; max_load_factor()) {</span>
+<span style = "background-color:#fdd">                        rehash(next_prime(3 * bucket_count() / 2));
+                        index = bucket(k);</span>
+                    }
+                }
+
+<span style = "background-color:#dfd">                return (m_data + index)-&gt;second;
+            }</span>
+
+<span style = "background-color:#dfd">            mapped_type&amp; operator[](key_type&amp;&amp; k) {
+                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE) {
+                    if (m_set[index] == DEL) {</span>
+<span style = "background-color:#fdd">                        m_data[index].~value_type();</span>
+                    }
+<span style = "background-color:#dfd">                    use_size++;
+                    m_set[index] = USE;</span>
+
+<span style = "background-color:#dfd">                    new(m_data + index) value_type{ std::move(k), mapped_type{} };</span>
+
+<span style = "background-color:#dfd">                    if (load_factor() &gt; max_load_factor()) {
+                        rehash(next_prime(3 * bucket_count() / 2));
+                        index = bucket(k);</span>
+                    }
+                }
+
+<span style = "background-color:#dfd">                return (m_data + index)-&gt;second;
+            }</span>
+            //@}
+
+            //@{
+            /**
+             *  @brief  Access to %hash_map data.
+             *  @param  k  The key for which data should be retrieved.
+             *  @return  A reference to the data whose key is equal to @a k, if
+             *           such a data is present in the %hash_map.
+             *  @throw  std::out_of_range  If no such data is present.
+             */
+<span style = "background-color:#dfd">            mapped_type&amp; at(const key_type&amp; k) {
+                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE)</span>
+<span style = "background-color:#fdd">                    throw std::out_of_range("Error: index out of range!");</span>
+                
+<span style = "background-color:#dfd">                return m_data[index].second;    
+            }</span>
+
+<span style = "background-color:#dfd">            const mapped_type&amp; at(const key_type&amp; k) const {
+                size_type index = bucket(k);</span>
+
+<span style = "background-color:#dfd">                if (m_set[index] != USE)</span>
+<span style = "background-color:#fdd">                    throw std::out_of_range("Error: index out of range!");</span>
+
+<span style = "background-color:#dfd">                const mapped_type&amp; t = m_data[index].second;
+                return t;
+            }</span>
+            //@}
+
+            // bucket interface.
+
+            /// Returns the number of buckets of the %hash_map.
+<span style = "background-color:#dfd">            size_type bucket_count() const noexcept {
+                return m_set.size();
+            }</span>
+
+            /*
+            * @brief  Returns the bucket index of a given element.
+            * @param  _K  A key instance.
+            * @return  The key bucket index.
+            */
+<span style = "background-color:#dfd">            size_type bucket(const key_type&amp; _K) const {
+                size_type h1 = m_hash(_K) % m_set.size();
+                size_type h2 = m_hash(_K) % (m_set.size() - 1) + 1;</span>
+
+<span style = "background-color:#dfd">                size_type first_del = -1;</span>
+
+<span style = "background-color:#dfd">                size_type i = 0;
+                while (i &lt; m_set.size()) {
+                    if (first_del == -1 &amp;&amp; m_set[h1] == DEL)
+                        first_del = h1;</span>
+
+<span style = "background-color:#dfd">                    if (m_set[h1] == EMPTY)
+                        break;</span>
+
+<span style = "background-color:#dfd">                    if (m_set[h1] == USE &amp;&amp; m_data[h1].first == _K)
+                        return h1;</span>
+
+<span style = "background-color:#dfd">                    h1 = (h1 + h2) % m_set.size();
+                    i++;
+                }</span>
+                
+<span style = "background-color:#dfd">                if (first_del == -1)
+                    return h1;
+                return first_del;
+            }</span>
+
+            // hash policy.
+
+            /// Returns the average number of elements per bucket.
+<span style = "background-color:#dfd">            float load_factor() const noexcept {
+                return static_cast&lt;float&gt;(use_size) / m_set.size();
+            }</span>
+
+            /// Returns a positive number that the %hash_map tries to keep the
+            /// load factor less than or equal to.
+<span style = "background-color:#dfd">            float max_load_factor() const noexcept {
+                return max_load_factor_;
+            }</span>
+
+            /**
+             *  @brief  Change the %hash_map maximum load factor.
+             *  @param  z The new maximum load factor.
+             */
+<span style = "background-color:#dfd">            void max_load_factor(float z) {
+                max_load_factor_ = z;
+            }</span>
+
+            /**
+             *  @brief  May rehash the %hash_map.
+             *  @param  n The new number of buckets.
+             *
+             *  Rehash will occur only if the new number of buckets respect the
+             *  %hash_map maximum load factor.
+             */
+<span style = "background-color:#dfd">            void rehash(size_type n) {
+                auto new_load_factor = static_cast&lt;float&gt;(use_size) / n;
+                if (new_load_factor &gt; max_load_factor())
+                    return;</span>
+
+<span style = "background-color:#dfd">                if (!is_prime(n))
+                    n = next_prime(n);</span>
+
+<span style = "background-color:#dfd">                hash_map hash_m(n);
+                hash_m.m_allocator = m_allocator;</span>
+                hash_m.m_hash = m_hash;
+                hash_m.m_key_equal = m_key_equal;
+
+<span style = "background-color:#dfd">                for (auto it = begin(); it != end(); it++) {
+                    hash_m.insert(*it);
+                }</span>
+
+<span style = "background-color:#dfd">                *this = hash_m;
+            }</span>
+
+            /**
+             *  @brief  Prepare the %hash_map for a specified number of
+             *          elements.
+             *  @param  n Number of elements required.
+             *
+             *  Same as rehash(ceil(n / max_load_factor())).
+             */
+            void reserve(size_type n) {
+                rehash(n / max_load_factor_);
+            }
+
+<span style = "background-color:#dfd">            bool operator==(const hash_map&amp; other) const {
+                for (auto it = begin(); it != end(); it++) {
+                    if (!other.contains(it-&gt;first))
+                        return false;
+                }</span>
+
+<span style = "background-color:#dfd">                return size() == other.size();
+            }</span>
+
+        private:
+<span style = "background-color:#dfd">            bool is_prime(const size_type&amp; n1) {
+                for (size_type i = 2; i * i &lt;= n1; i++)
+                    if (n1 % i == 0)
+                        return false;
+                return true;
+            }</span>
+
+<span style = "background-color:#dfd">            size_type next_prime(size_type n) {
+                while (!is_prime(n)) {
+                    n++;
+                }
+                return n;
+            }</span>
+
+            allocator_type m_allocator;
+            hasher m_hash;
+            key_equal m_key_equal;
+
+            std::vector&lt;char&gt; m_set;
+<span style = "background-color:#dfd">            value_type* m_data = 0;
+            size_type use_size = 0;
+            float max_load_factor_ = BASE_LOAD_FACTOR;</span>
+    };
+
+} // namespace fefu</pre>
+	</body>
+</html>

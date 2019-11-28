@@ -1,0 +1,708 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>main.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+
+#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;list&gt;
+#include &lt;forward_list&gt;
+#include &lt;set&gt;
+#include &lt;unordered_set&gt;
+#include &lt;map&gt;
+#include &lt;unordered_map&gt;
+#include &lt;stack&gt;
+#include &lt;queue&gt;
+#include &lt;deque&gt;
+
+#include &lt;iostream&gt;
+#include &lt;cmath&gt;
+#include &lt;algorithm&gt;
+#include &lt;numeric&gt;
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;sstream&gt;
+#include &lt;iomanip&gt;
+#include &lt;tuple&gt;
+#include &lt;type_traits&gt;
+#include &lt;functional&gt;
+#include &lt;utility&gt;
+#include &lt;atomic&gt;
+#include &lt;thread&gt;
+#include &lt;future&gt;
+#include &lt;chrono&gt;
+#include &lt;iterator&gt;
+#include &lt;memory&gt;
+
+#define CATCH_CONFIG_MAIN
+#include "../../catch.hpp"
+#include "hash_map.hpp"
+
+using namespace fefu;
+using namespace std;
+
+<span style = "background-color:#dfd">TEST_CASE("constructor()") {
+    hash_map&lt;int, int&gt; a;
+    REQUIRE(a.bucket_count() == 0);
+    REQUIRE(a.size() == 0);
+    REQUIRE(a.begin() == a.end());
+    REQUIRE(a.empty() == true);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(n)") {
+    hash_map&lt;string, string&gt; a(10);
+    REQUIRE(a.bucket_count() == 10);
+    REQUIRE(a.size() == 0);
+    REQUIRE(a.begin() == a.end());
+    REQUIRE(a.empty() == true);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(first it, last it)") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 3);
+    REQUIRE(a.bucket_count() == 7);
+    REQUIRE(a.begin() != a.end());
+    REQUIRE(a.empty() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(hash_m) copy") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());
+    hash_map&lt;int, int&gt; b(a);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()-&gt;first == 1);
+    REQUIRE(b.begin()-&gt;second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(hash_m) move") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());
+    hash_map&lt;int, int&gt; b(std::move(a));</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(hash_m, a) copy") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());</span>
+
+<span style = "background-color:#dfd">    auto al = fefu::allocator&lt;std::pair&lt;const int, int&gt;&gt;();
+    al.setSeed(101);
+    hash_map&lt;int, int&gt; b(a, al);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()-&gt;first == 1);
+    REQUIRE(b.begin()-&gt;second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(al.getSeed() == b.get_allocator().getSeed());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(hash_m, a) move") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());</span>
+
+<span style = "background-color:#dfd">    auto al = fefu::allocator&lt;std::pair&lt;const int, int&gt;&gt;();
+    al.setSeed(0x1010);
+    hash_map&lt;int, int&gt; b(std::move(a), al);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(al.getSeed() == b.get_allocator().getSeed());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("constructor(init_list)") {
+    initializer_list&lt;pair&lt;const string, string&gt;&gt; l = { {"olo", "1"}, {"ala", "2"} };
+    hash_map&lt;string, string&gt; a(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 2);
+    REQUIRE(a.bucket_count() == 5);
+    REQUIRE(a["olo"] == "1");
+    REQUIRE(a["ala"] == "2");
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("oper '=' copy") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());</span>
+
+<span style = "background-color:#dfd">    hash_map&lt;int, int&gt; b = a;</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()-&gt;first == 1);
+    REQUIRE(b.begin()-&gt;second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("oper '=' move") {
+    unordered_map&lt;int, int&gt; m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map&lt;int, int&gt; a(m.begin(), m.end());
+    hash_map&lt;int, int&gt; b = std::move(a);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("oper '=' init_list") {
+    initializer_list&lt;pair&lt;const string, string&gt;&gt; l = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map&lt;string, string&gt; a(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 3);
+    REQUIRE(a.bucket_count() == 7);
+    REQUIRE(a["olo"] == "1");
+    REQUIRE(a["ala"] == "2");
+    REQUIRE(a["KKK"] == "WWW");
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("get_allocator") {
+    initializer_list&lt;pair&lt;const string, string&gt;&gt; l = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map&lt;string, string&gt; a(l);</span>
+
+<span style = "background-color:#dfd">    fefu::allocator&lt;pair&lt;const string, string&gt;&gt; alloc;
+    alloc.setSeed(010203);
+    hash_map&lt;string, string&gt; b(a, alloc);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(alloc.getSeed() == b.get_allocator().getSeed());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("empty") {
+    hash_map&lt;string, string&gt; a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map&lt;string, string&gt; b;
+    hash_map&lt;string, string&gt; c = {};</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.empty() == false);
+    REQUIRE(b.empty() == true);
+    REQUIRE(c.empty() == true);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("size") {
+    hash_map&lt;string, string&gt; a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map&lt;string, string&gt; b;
+    hash_map&lt;char, char&gt; c(1000);
+    for (int i = 0; i &lt; 100; i++)</span>
+    {
+<span style = "background-color:#dfd">        c[i] = i * 2;
+    }</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 3);
+    REQUIRE(b.size() == 0);
+    REQUIRE(c.size() == 100);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("max_size") {
+    hash_map&lt;string, string&gt; a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.max_size() == UINT32_MAX);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("begin iterator") {
+    hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    hash_map_iterator it = a.begin();</span>
+
+<span style = "background-color:#dfd">    REQUIRE(it == a.begin());
+    REQUIRE(*it == *a.begin());
+    REQUIRE(it-&gt;first == "olo");
+    REQUIRE(it-&gt;second == "1");
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("begin const_iterator") {
+    const hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    hash_map_const_iterator it = a.begin();</span>
+
+<span style = "background-color:#dfd">    REQUIRE(it == a.begin());
+    REQUIRE(*it == *a.begin());
+    REQUIRE(it-&gt;first == "olo");
+    REQUIRE(it-&gt;second == "1");
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("cbegin const_iterator") {
+    const hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    hash_map_const_iterator it = a.cbegin();</span>
+
+<span style = "background-color:#dfd">    REQUIRE(it == a.cbegin());
+    REQUIRE(*it == *a.cbegin());
+    REQUIRE(it-&gt;first == "olo");
+    REQUIRE(it-&gt;second == "1");
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("end iterator") {
+    hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    hash_map&lt;string, string&gt; b = { {"olo", "1"}, {"AAA", "BBB"} };
+    hash_map&lt;string, string&gt; c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() == a.end());
+    REQUIRE(++a.begin() == a.end());
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() != c.end());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("end const_iterator") {
+    const hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    const hash_map&lt;string, string&gt; b = { {"olo", "1"}, {"AAA", "BBB"} };
+    const hash_map&lt;string, string&gt; c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() == a.end());
+    REQUIRE(++a.begin() == a.end());
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() != c.end());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("cend const_iterator") {
+    const hash_map&lt;string, string&gt; a = { {"olo", "1"} };
+    const hash_map&lt;string, string&gt; b = { {"olo", "1"}, {"AAA", "BBB"} };
+    const hash_map&lt;string, string&gt; c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.cend() != b.cend());
+    REQUIRE(a.cend() == a.cend());
+    REQUIRE(++a.cbegin() == a.cend());
+    REQUIRE(a.cend() != b.cend());
+    REQUIRE(a.cend() != c.cend());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert(value)") {
+    set&lt;pair&lt;const int, int&gt;&gt; s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a(s.begin(), s.end());</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 5);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    pair&lt;const int, int&gt; p = { 100, 10 };
+    a.insert(p);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    a.insert(p);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    auto st = s;
+    st.clear();
+    for (auto it = a.begin(); it != a.end(); it++)
+        st.insert(*it);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(st != s);
+    s.insert({ 100, 10 });
+    REQUIRE(st == s);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert(value) move") {
+    set&lt;pair&lt;const int, int&gt;&gt; s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a(s.begin(), s.end());</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 5);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    pair&lt;const int, int&gt; p = { 100, 10 };
+    a.insert(std::move(p));</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    a.insert(std::move(p));</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);</span>
+
+<span style = "background-color:#dfd">    auto st = s;
+    st.clear();
+    for (auto it = a.begin(); it != a.end(); it++)
+        st.insert(*it);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(st != s);
+    s.insert({ 100, 10 });
+    REQUIRE(st == s);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert (first it, last it)") {
+    set&lt;pair&lt;const int, int&gt;&gt; s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a;
+    a.insert(s.begin(), s.end());</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == s.size());
+    for (auto el : s) {
+        REQUIRE(a[el.first] == el.second);
+    }
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert init list") {
+    initializer_list&lt;pair&lt;const int, int&gt;&gt; l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a;
+    a.insert(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
+    }</span>
+
+<span style = "background-color:#dfd">    a.insert(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
+    }</span>
+
+<span style = "background-color:#dfd">    a.insert({ 1, 1 });</span>
+
+<span style = "background-color:#dfd">    a.insert(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() - 1 == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
+    }
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert or assign") {
+    initializer_list&lt;pair&lt;const int, int&gt;&gt; l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a;
+    a.insert(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
+    }</span>
+
+<span style = "background-color:#dfd">    pair&lt;const int, int&gt; g = { 1, 10 };
+    auto r = a.insert_or_assign(g.first, g.second);
+    REQUIRE(r.second == true);
+    r = a.insert_or_assign(g.first, g.second);
+    REQUIRE(r.second == false);</span>
+
+<span style = "background-color:#dfd">    a.insert_or_assign(1, 1);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size() + 1);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("insert or assign move") {
+    initializer_list&lt;pair&lt;const int, int&gt;&gt; l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map&lt;int, int&gt; a;
+    a.insert(l);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
+    }</span>
+
+<span style = "background-color:#dfd">    pair&lt;const int, int&gt; g = { 1, 10 };
+    auto r = a.insert_or_assign(g.first, std::move(g.second));
+    REQUIRE(r.second == true);
+    pair&lt;const int, int&gt; c = { 1, 20 };
+    r = a.insert_or_assign(c.first, std::move(c.second));
+    REQUIRE(r.second == false);</span>
+
+<span style = "background-color:#dfd">    a.insert_or_assign(1, 1);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == l.size() + 1);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("erase const_it") {
+    hash_map&lt;char, char&gt; b = { {'a', 'b'} };
+    hash_map&lt;char, char&gt; c = { {'d', 'v'} };</span>
+
+
+<span style = "background-color:#dfd">    hash_map_const_iterator it = c.begin();
+    REQUIRE(b.erase(it) == b.end());
+    REQUIRE(b.size() == 1);</span>
+
+<span style = "background-color:#dfd">    hash_map_const_iterator it1 = b.begin();
+    b.erase(it1);
+    REQUIRE(b.begin() == b.end());
+    REQUIRE(b.size() == 0);
+}</span>
+
+
+<span style = "background-color:#dfd">TEST_CASE("erase it") {
+    hash_map&lt;char, char&gt; b = { {'a', 'b'} };
+    hash_map&lt;char, char&gt; c = { {'d', 'v'} };</span>
+
+
+<span style = "background-color:#dfd">    hash_map_iterator it = c.begin();
+    REQUIRE(b.erase(it) == b.end());
+    REQUIRE(b.size() == 1);</span>
+
+<span style = "background-color:#dfd">    hash_map_iterator it1 = b.begin();
+    b.erase(it1);
+    REQUIRE(b.begin() == b.end());
+    REQUIRE(b.size() == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("erase key") {
+    hash_map&lt;int, int&gt; a;</span>
+
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 1000; i++)</span>
+    {
+<span style = "background-color:#dfd">        a.insert({ i, i * i });
+    }
+    REQUIRE(a.size() == 1000);</span>
+
+<span style = "background-color:#dfd">    for (int i = 0; i &lt; 1000; i++)</span>
+    {
+<span style = "background-color:#dfd">        REQUIRE(a.erase(i) == 1);
+        REQUIRE(a.size() == 999 - i);
+    }
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("erase (first it, last it)") {
+    hash_map&lt;int, int&gt; a = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+    hash_map&lt;int, int&gt; b = { {3, 3}, {4, 4} };</span>
+
+<span style = "background-color:#dfd">    a.erase(b.begin(), b.end());
+    REQUIRE(a.size() == 3);</span>
+
+<span style = "background-color:#dfd">    set&lt;pair&lt;int, int&gt;&gt; s = { {1, 1}, {2, 2}, {5, 5} };
+    set&lt;pair&lt;int, int&gt;&gt; st;
+    for (auto it = a.begin(); it != a.end(); it++) {
+        st.insert(*it);
+    }
+    REQUIRE(st == s);</span>
+
+<span style = "background-color:#dfd">    b.erase(b.begin(), b.end());
+    REQUIRE(b.empty() == true);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("clear") {
+    hash_map&lt;int, int&gt; a = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };</span>
+
+<span style = "background-color:#dfd">    a.clear();</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.empty() == true);
+    REQUIRE(a.begin() == a.end());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("swap") {
+    fefu::allocator&lt;pair&lt;const int, int&gt;&gt; al_1;
+    al_1.setSeed(101);
+    hash_map&lt;int, int&gt; a(al_1);
+    a.insert({ {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} });</span>
+
+<span style = "background-color:#dfd">    fefu::allocator&lt;pair&lt;const int, int&gt;&gt; al_2;
+    al_2.setSeed(202);
+    hash_map&lt;int, int&gt; b(al_2);
+    b.insert({ {6, 6}, {7, 7} });</span>
+
+<span style = "background-color:#dfd">    a.swap(b);</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.size() == 2);
+    REQUIRE(b.size() == 5);
+    REQUIRE(a.find(6) != a.end());
+    REQUIRE(a.find(7) != a.end());</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.begin() != b.begin());
+    REQUIRE(a.get_allocator().getSeed() == 202);
+    REQUIRE(b.get_allocator().getSeed() == 101);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("find") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.find("A") != a.end());
+    REQUIRE(a.find("B") != a.end());
+    REQUIRE(a.find("C") != a.end());
+    REQUIRE(a.find("F") == a.end());
+    REQUIRE(a.find("GAS") == a.end());</span>
+
+<span style = "background-color:#dfd">    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.find("GA") != a.end());
+    REQUIRE(a.find("GO") != a.end());</span>
+
+<span style = "background-color:#dfd">    a.erase("GA");
+    REQUIRE(a.find("GA") == a.end());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("find const") {
+    const hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.find("A") != a.end());
+    REQUIRE(a.find("B") != a.end());
+    REQUIRE(a.find("C") != a.end());
+    REQUIRE(a.find("F") == a.end());
+    REQUIRE(a.find("GAS") == a.end());
+    REQUIRE(a.find("GA") == a.end());
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("count") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.count("A") == 1);
+    REQUIRE(a.count("B") == 1);
+    REQUIRE(a.count("C") == 1);
+    REQUIRE(a.count("F") == 0);
+    REQUIRE(a.count("GAS") == 0);</span>
+
+<span style = "background-color:#dfd">    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.count("GA") == 1);
+    REQUIRE(a.count("GO") == 1);</span>
+
+<span style = "background-color:#dfd">    a.erase("GA");
+    REQUIRE(a.count("GA") == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("contains") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.contains("A") == 1);
+    REQUIRE(a.contains("B") == 1);
+    REQUIRE(a.contains("C") == 1);
+    REQUIRE(a.contains("F") == 0);
+    REQUIRE(a.contains("GAS") == 0);</span>
+
+<span style = "background-color:#dfd">    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });</span>
+
+<span style = "background-color:#dfd">    REQUIRE(a.contains("GA") == 1);
+    REQUIRE(a.contains("GO") == 1);</span>
+
+<span style = "background-color:#dfd">    a.erase("GA");
+    REQUIRE(a.contains("GA") == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("[]") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a["A"] == t++);
+    REQUIRE(a["B"] == t++);
+    REQUIRE(a["C"] == t++);
+    REQUIRE(a["D"] == t++);
+    REQUIRE(a["E"] == t++);
+    REQUIRE(a["F"] == 0);</span>
+
+<span style = "background-color:#dfd">    a.insert({ "RAZA", t });
+    REQUIRE(a["RAZA"] == t);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("[] move") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a["A"] == t++);
+    REQUIRE(a["B"] == t++);
+    REQUIRE(a["C"] == t++);
+    REQUIRE(a["D"] == t++);
+    REQUIRE(a["E"] == t++);
+    REQUIRE(a["F"] == 0);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("at") {
+    hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a.at("A") == t++);
+    REQUIRE(a.at("B") == t++);
+    REQUIRE(a.at("C") == t++);
+    REQUIRE(a.at("D") == t++);
+    REQUIRE(a.at("E") == t++);</span>
+
+<span style = "background-color:#dfd">    a["RAZA"] = t;
+    REQUIRE(a.at("RAZA") == t);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("at const") {
+    const hash_map&lt;string, int&gt; a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a.at("A") == t++);
+    REQUIRE(a.at("B") == t++);
+    REQUIRE(a.at("C") == t++);
+    REQUIRE(a.at("D") == t++);
+    REQUIRE(a.at("E") == t++);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("rehash") {
+    hash_map&lt;int, int&gt; mapa;
+    REQUIRE(mapa.bucket_count() == 0);</span>
+
+<span style = "background-color:#dfd">    mapa.rehash(3);
+    mapa[1] = 2;
+    mapa[2] = 3;
+    mapa[3] = 4;
+    REQUIRE(mapa.bucket_count() == 7);
+    mapa.rehash(3);
+    REQUIRE(mapa.bucket_count() == 7);</span>
+
+<span style = "background-color:#dfd">    mapa.rehash(112);
+    REQUIRE(mapa.bucket_count() == 113);
+}</span>
+
+<span style = "background-color:#dfd">TEST_CASE("oper ==") {
+    hash_map&lt;int, int&gt; mapa1 = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+    hash_map&lt;int, int&gt; mapa2 = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };</span>
+
+<span style = "background-color:#dfd">    REQUIRE((mapa1 == mapa2) == true);
+    hash_map&lt;int, int&gt; mapa3 = { {1, 1}, {3, 3}, {4, 4} };
+    REQUIRE((mapa1 == mapa3) == false);</span>
+
+<span style = "background-color:#dfd">    mapa3[2] = 2;
+    mapa3[5] = 5;
+    REQUIRE((mapa1 == mapa2) == true);
+}</span></pre>
+	</body>
+</html>
