@@ -1,373 +1,695 @@
+
+#include <vector>
+#include <string>
+#include <list>
+#include <forward_list>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
+#include <stack>
+#include <queue>
+#include <deque>
+
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <numeric>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <tuple>
+#include <type_traits>
+#include <functional>
+#include <utility>
+#include <atomic>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <iterator>
+#include <memory>
+
+#define CATCH_CONFIG_MAIN
 #include "../../catch.hpp"
 #include "hash_map.hpp"
 
-// *************************
-// *************************
-// *************************
-// *************************
-// *************************
-
-#define CATCH_CONFIG_MAIN
-#include <iostream>
-#include <unordered_map>
-
+using namespace fefu;
 using namespace std;
 
-using namespace fefu;
+TEST_CASE("constructor()") {
+    hash_map<int, int> a;
+    REQUIRE(a.bucket_count() == 0);
+    REQUIRE(a.size() == 0);
+    REQUIRE(a.begin() == a.end());
+    REQUIRE(a.empty() == true);
+}
 
+TEST_CASE("constructor(n)") {
+    hash_map<string, string> a(10);
+    REQUIRE(a.bucket_count() == 10);
+    REQUIRE(a.size() == 0);
+    REQUIRE(a.begin() == a.end());
+    REQUIRE(a.empty() == true);
+}
 
-template<typename T>
-class custom_allocator
-{
-public:
-    using size_type = std::size_t;
-    using difference_type = std::ptrdiff_t;
-    using pointer = T*;
-    using const_pointer = const T*;
-    using reference = typename std::add_lvalue_reference<T>::type;
-    using const_reference = typename std::add_lvalue_reference<const T>::type;
-    using value_type = T;
+TEST_CASE("constructor(first it, last it)") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    hash_map<int, int> a(m.begin(), m.end());
 
-public:
-    int x;
+    REQUIRE(a.size() == 3);
+    REQUIRE(a.bucket_count() == 7);
+    REQUIRE(a.begin() != a.end());
+    REQUIRE(a.empty() == 0);
+}
 
-    custom_allocator() : x(rand()) { }
+TEST_CASE("constructor(hash_m) copy") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+    hash_map<int, int> b(a);
 
-    custom_allocator(const custom_allocator& other) noexcept : x(other.x) { }
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()->first == 1);
+    REQUIRE(b.begin()->second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}
 
-    template <class U>
-    custom_allocator(const custom_allocator<U>& other) noexcept : x(other.x) { }
+TEST_CASE("constructor(hash_m) move") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+    hash_map<int, int> b(std::move(a));
 
-    ~custom_allocator() = default;
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}
 
-    pointer allocate(size_type n)
+TEST_CASE("constructor(hash_m, a) copy") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+
+    auto al = fefu::allocator<std::pair<const int, int>>();
+    al.setSeed(101);
+    hash_map<int, int> b(a, al);
+
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()->first == 1);
+    REQUIRE(b.begin()->second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+
+    REQUIRE(al.getSeed() == b.get_allocator().getSeed());
+}
+
+TEST_CASE("constructor(hash_m, a) move") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+
+    auto al = fefu::allocator<std::pair<const int, int>>();
+    al.setSeed(0x1010);
+    hash_map<int, int> b(std::move(a), al);
+
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+
+    REQUIRE(al.getSeed() == b.get_allocator().getSeed());
+}
+
+TEST_CASE("constructor(init_list)") {
+    initializer_list<pair<const string, string>> l = { {"olo", "1"}, {"ala", "2"} };
+    hash_map<string, string> a(l);
+
+    REQUIRE(a.size() == 2);
+    REQUIRE(a.bucket_count() == 5);
+    REQUIRE(a["olo"] == "1");
+    REQUIRE(a["ala"] == "2");
+}
+
+TEST_CASE("oper '=' copy") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+
+    hash_map<int, int> b = a;
+
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin()->first == 1);
+    REQUIRE(b.begin()->second == 1);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}
+
+TEST_CASE("oper '=' move") {
+    unordered_map<int, int> m;
+    m[1] = 1;
+    m[2] = 2;
+    m[3] = 3;
+    m[4] = 4;
+    m[5] = 5;
+    hash_map<int, int> a(m.begin(), m.end());
+    hash_map<int, int> b = std::move(a);
+
+    REQUIRE(b.size() == 5);
+    REQUIRE(b.bucket_count() == 11);
+    REQUIRE(b.begin() != a.begin());
+    REQUIRE(b.end() != a.end());
+    REQUIRE(b.begin() != b.end());
+    REQUIRE(b.empty() == 0);
+}
+
+TEST_CASE("oper '=' init_list") {
+    initializer_list<pair<const string, string>> l = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map<string, string> a(l);
+
+    REQUIRE(a.size() == 3);
+    REQUIRE(a.bucket_count() == 7);
+    REQUIRE(a["olo"] == "1");
+    REQUIRE(a["ala"] == "2");
+    REQUIRE(a["KKK"] == "WWW");
+}
+
+TEST_CASE("get_allocator") {
+    initializer_list<pair<const string, string>> l = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map<string, string> a(l);
+
+    fefu::allocator<pair<const string, string>> alloc;
+    alloc.setSeed(010203);
+    hash_map<string, string> b(a, alloc);
+
+    REQUIRE(alloc.getSeed() == b.get_allocator().getSeed());
+}
+
+TEST_CASE("empty") {
+    hash_map<string, string> a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map<string, string> b;
+    hash_map<string, string> c = {};
+
+    REQUIRE(a.empty() == false);
+    REQUIRE(b.empty() == true);
+    REQUIRE(c.empty() == true);
+}
+
+TEST_CASE("size") {
+    hash_map<string, string> a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+    hash_map<string, string> b;
+    hash_map<char, char> c(1000);
+    for (int i = 0; i < 100; i++)
     {
-        return static_cast<pointer>(::operator new(n * sizeof(value_type)));
+        c[i] = i * 2;
     }
 
-    void deallocate(pointer p, size_type) noexcept
-    {
-        ::operator delete(p);
+    REQUIRE(a.size() == 3);
+    REQUIRE(b.size() == 0);
+    REQUIRE(c.size() == 100);
+}
+
+TEST_CASE("max_size") {
+    hash_map<string, string> a = { {"olo", "1"}, {"KKK", "WWW"}, {"ala", "2"} };
+
+    REQUIRE(a.max_size() == UINT32_MAX);
+}
+
+TEST_CASE("begin iterator") {
+    hash_map<string, string> a = { {"olo", "1"} };
+    hash_map_iterator it = a.begin();
+
+    REQUIRE(it == a.begin());
+    REQUIRE(*it == *a.begin());
+    REQUIRE(it->first == "olo");
+    REQUIRE(it->second == "1");
+}
+
+TEST_CASE("begin const_iterator") {
+    const hash_map<string, string> a = { {"olo", "1"} };
+    hash_map_const_iterator it = a.begin();
+
+    REQUIRE(it == a.begin());
+    REQUIRE(*it == *a.begin());
+    REQUIRE(it->first == "olo");
+    REQUIRE(it->second == "1");
+}
+
+TEST_CASE("cbegin const_iterator") {
+    const hash_map<string, string> a = { {"olo", "1"} };
+    hash_map_const_iterator it = a.cbegin();
+
+    REQUIRE(it == a.cbegin());
+    REQUIRE(*it == *a.cbegin());
+    REQUIRE(it->first == "olo");
+    REQUIRE(it->second == "1");
+}
+
+TEST_CASE("end iterator") {
+    hash_map<string, string> a = { {"olo", "1"} };
+    hash_map<string, string> b = { {"olo", "1"}, {"AAA", "BBB"} };
+    hash_map<string, string> c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };
+
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() == a.end());
+    REQUIRE(++a.begin() == a.end());
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() != c.end());
+}
+
+TEST_CASE("end const_iterator") {
+    const hash_map<string, string> a = { {"olo", "1"} };
+    const hash_map<string, string> b = { {"olo", "1"}, {"AAA", "BBB"} };
+    const hash_map<string, string> c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };
+
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() == a.end());
+    REQUIRE(++a.begin() == a.end());
+    REQUIRE(a.end() != b.end());
+    REQUIRE(a.end() != c.end());
+}
+
+TEST_CASE("cend const_iterator") {
+    const hash_map<string, string> a = { {"olo", "1"} };
+    const hash_map<string, string> b = { {"olo", "1"}, {"AAA", "BBB"} };
+    const hash_map<string, string> c = { {"AAA", "BBB"},  {"CCC", "WWW"}, {"KRA", "BRA"} };
+
+    REQUIRE(a.cend() != b.cend());
+    REQUIRE(a.cend() == a.cend());
+    REQUIRE(++a.cbegin() == a.cend());
+    REQUIRE(a.cend() != b.cend());
+    REQUIRE(a.cend() != c.cend());
+}
+
+TEST_CASE("insert(value)") {
+    set<pair<const int, int>> s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a(s.begin(), s.end());
+
+    REQUIRE(a.size() == 5);
+    REQUIRE(a.bucket_count() == 11);
+
+    pair<const int, int> p = { 100, 10 };
+    a.insert(p);
+
+    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);
+
+    a.insert(p);
+
+    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);
+
+    auto st = s;
+    st.clear();
+    for (auto it = a.begin(); it != a.end(); it++)
+        st.insert(*it);
+
+    REQUIRE(st != s);
+    s.insert({ 100, 10 });
+    REQUIRE(st == s);
+}
+
+TEST_CASE("insert(value) move") {
+    set<pair<const int, int>> s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a(s.begin(), s.end());
+
+    REQUIRE(a.size() == 5);
+    REQUIRE(a.bucket_count() == 11);
+
+    pair<const int, int> p = { 100, 10 };
+    a.insert(std::move(p));
+
+    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);
+
+    a.insert(std::move(p));
+
+    REQUIRE(a.size() == 6);
+    REQUIRE(a.bucket_count() == 11);
+
+    auto st = s;
+    st.clear();
+    for (auto it = a.begin(); it != a.end(); it++)
+        st.insert(*it);
+
+    REQUIRE(st != s);
+    s.insert({ 100, 10 });
+    REQUIRE(st == s);
+}
+
+TEST_CASE("insert (first it, last it)") {
+    set<pair<const int, int>> s = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a;
+    a.insert(s.begin(), s.end());
+
+    REQUIRE(a.size() == s.size());
+    for (auto el : s) {
+        REQUIRE(a[el.first] == el.second);
+    }
+}
+
+TEST_CASE("insert init list") {
+    initializer_list<pair<const int, int>> l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a;
+    a.insert(l);
+
+    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
     }
 
-    bool operator==(const custom_allocator&) const
-    {
-        return true;
+    a.insert(l);
+
+    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
     }
 
-    bool operator!=(const custom_allocator&) const
-    {
-        return true;
+    a.insert({ 1, 1 });
+
+    a.insert(l);
+
+    REQUIRE(a.size() - 1 == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
     }
-};
+}
 
-template<auto N, auto... Ns>
-struct is_npack_contain : std::bool_constant<((N == Ns) || ...)> { };
+TEST_CASE("insert or assign") {
+    initializer_list<pair<const int, int>> l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a;
+    a.insert(l);
 
-template<auto N, auto... Ns>
-constexpr bool is_npack_contain_v = is_npack_contain<N, Ns...>::value;
-
-enum ff
-{
-    dc, cc, mc, ca, ma
-};
-
-template<ff... Forbidden>
-struct declarator
-{
-    template<typename Dummy = void>
-    constexpr void check_dc()
-    {
-        if constexpr (is_npack_contain_v<dc, Forbidden...>) static_assert (!std::is_same_v<Dummy, Dummy>, "Default constructor is deleted");
+    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
     }
 
-    template<typename Dummy = void>
-    constexpr void check_cc()
-    {
-        if constexpr (is_npack_contain_v<cc, Forbidden...>) static_assert (!std::is_same_v<Dummy, Dummy>, "Copy constructor is deleted");
+    pair<const int, int> g = { 1, 10 };
+    auto r = a.insert_or_assign(g.first, g.second);
+    REQUIRE(r.second == true);
+    r = a.insert_or_assign(g.first, g.second);
+    REQUIRE(r.second == false);
+
+    a.insert_or_assign(1, 1);
+
+    REQUIRE(a.size() == l.size() + 1);
+}
+
+TEST_CASE("insert or assign move") {
+    initializer_list<pair<const int, int>> l = { {10, 1}, {20, 2}, {30, 3}, {40, 4}, {50, 5} };
+    hash_map<int, int> a;
+    a.insert(l);
+
+    REQUIRE(a.size() == l.size());
+    for (auto el : l) {
+        REQUIRE(a[el.first] == el.second);
     }
 
-    template<typename Dummy = void>
-    constexpr void check_mc()
+    pair<const int, int> g = { 1, 10 };
+    auto r = a.insert_or_assign(g.first, std::move(g.second));
+    REQUIRE(r.second == true);
+    pair<const int, int> c = { 1, 20 };
+    r = a.insert_or_assign(c.first, std::move(c.second));
+    REQUIRE(r.second == false);
+
+    a.insert_or_assign(1, 1);
+
+    REQUIRE(a.size() == l.size() + 1);
+}
+
+TEST_CASE("erase const_it") {
+    hash_map<char, char> b = { {'a', 'b'} };
+    hash_map<char, char> c = { {'d', 'v'} };
+
+
+    hash_map_const_iterator it = c.begin();
+    REQUIRE(b.erase(it) == b.end());
+    REQUIRE(b.size() == 1);
+
+    hash_map_const_iterator it1 = b.begin();
+    b.erase(it1);
+    REQUIRE(b.begin() == b.end());
+    REQUIRE(b.size() == 0);
+}
+
+
+TEST_CASE("erase it") {
+    hash_map<char, char> b = { {'a', 'b'} };
+    hash_map<char, char> c = { {'d', 'v'} };
+
+
+    hash_map_iterator it = c.begin();
+    REQUIRE(b.erase(it) == b.end());
+    REQUIRE(b.size() == 1);
+
+    hash_map_iterator it1 = b.begin();
+    b.erase(it1);
+    REQUIRE(b.begin() == b.end());
+    REQUIRE(b.size() == 0);
+}
+
+TEST_CASE("erase key") {
+    hash_map<int, int> a;
+
+    for (int i = 0; i < 1000; i++)
     {
-        if constexpr (is_npack_contain_v<mc, Forbidden...>) static_assert (!std::is_same_v<Dummy, Dummy>, "Move constructor is deleted");
+        a.insert({ i, i * i });
     }
+    REQUIRE(a.size() == 1000);
 
-    template<typename Dummy = void>
-    constexpr void check_ca()
+    for (int i = 0; i < 1000; i++)
     {
-        if constexpr (is_npack_contain_v<ca, Forbidden...>) static_assert (!std::is_same_v<Dummy, Dummy>, "Copy assignment is deleted");
+        REQUIRE(a.erase(i) == 1);
+        REQUIRE(a.size() == 999 - i);
     }
+}
 
-    template<typename Dummy = void>
-    constexpr void check_ma()
-    {
-        if constexpr (is_npack_contain_v<ma, Forbidden...>) static_assert (!std::is_same_v<Dummy, Dummy>, "Move assignment is deleted");
+TEST_CASE("erase (first it, last it)") {
+    hash_map<int, int> a = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+    hash_map<int, int> b = { {3, 3}, {4, 4} };
+
+    a.erase(b.begin(), b.end());
+    REQUIRE(a.size() == 3);
+
+    set<pair<int, int>> s = { {1, 1}, {2, 2}, {5, 5} };
+    set<pair<int, int>> st;
+    for (auto it = a.begin(); it != a.end(); it++) {
+        st.insert(*it);
     }
+    REQUIRE(st == s);
 
-    int x;
-    declarator(int x) : x(x) { }
-    declarator() : x(0) { check_dc(); }
-    declarator(const declarator& other) : x(other.x) { check_cc(); }
-    declarator(declarator&& other) : x(std::move(other.x)) { check_mc(); }
-    declarator& operator=(const declarator&) { check_ca(); return *this; }
-    declarator& operator=(declarator&&) { check_ma(); return *this; }
-};
-
-using atype = custom_allocator<std::pair<const int, int>>;
-using hmint = hash_map<int, int>;
-using hminta = hash_map<int, int, std::hash<int>, std::equal_to<int>, atype>;
-
-TEST_CASE("_ctor()")
-{
-    srand(time(nullptr));
-    hmint m;
-    REQUIRE(m.size() == 0);
+    b.erase(b.begin(), b.end());
+    REQUIRE(b.empty() == true);
 }
 
-TEST_CASE("_ctor(n)")
-{
-    hmint m(666);
-    REQUIRE(m.bucket_count() == 666);
+TEST_CASE("clear") {
+    hash_map<int, int> a = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+
+    a.clear();
+
+    REQUIRE(a.empty() == true);
+    REQUIRE(a.begin() == a.end());
 }
 
-TEST_CASE("_ctor(a)")
-{
-    hminta m;
-    REQUIRE(std::is_same_v<custom_allocator<std::pair<const int, int>>, std::decay_t<decltype(m.get_allocator())>>);
+TEST_CASE("swap") {
+    fefu::allocator<pair<const int, int>> al_1;
+    al_1.setSeed(101);
+    hash_map<int, int> a(al_1);
+    a.insert({ {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} });
+
+    fefu::allocator<pair<const int, int>> al_2;
+    al_2.setSeed(202);
+    hash_map<int, int> b(al_2);
+    b.insert({ {6, 6}, {7, 7} });
+
+    a.swap(b);
+
+    REQUIRE(a.size() == 2);
+    REQUIRE(b.size() == 5);
+    REQUIRE(a.find(6) != a.end());
+    REQUIRE(a.find(7) != a.end());
+
+    REQUIRE(a.begin() != b.begin());
+    REQUIRE(a.get_allocator().getSeed() == 202);
+    REQUIRE(b.get_allocator().getSeed() == 101);
 }
 
-TEST_CASE("_ctor(l, n)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m(l, 666);
-    REQUIRE(m[1] == 2);
-    REQUIRE(m[3] == 4);
-    REQUIRE(m.bucket_count() == 666);
+TEST_CASE("find") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.find("A") != a.end());
+    REQUIRE(a.find("B") != a.end());
+    REQUIRE(a.find("C") != a.end());
+    REQUIRE(a.find("F") == a.end());
+    REQUIRE(a.find("GAS") == a.end());
+
+    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });
+
+    REQUIRE(a.find("GA") != a.end());
+    REQUIRE(a.find("GO") != a.end());
+
+    a.erase("GA");
+    REQUIRE(a.find("GA") == a.end());
 }
 
-TEST_CASE("_ctor(b, e, n")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m(l.begin(), l.end(), 666);
-    REQUIRE(m[1] == 2);
-    REQUIRE(m[3] == 4);
-    REQUIRE(m.bucket_count() == 666);
+TEST_CASE("find const") {
+    const hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.find("A") != a.end());
+    REQUIRE(a.find("B") != a.end());
+    REQUIRE(a.find("C") != a.end());
+    REQUIRE(a.find("F") == a.end());
+    REQUIRE(a.find("GAS") == a.end());
+    REQUIRE(a.find("GA") == a.end());
 }
 
-TEST_CASE("_ctor(cref)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    hminta m2(m1);
-    REQUIRE(m1[1] == m2[1]);
-    REQUIRE(m1[3] == m2[3]);
-    REQUIRE(m1.size() == m2.size());
-    REQUIRE(m1.get_allocator().x == m2.get_allocator().x);
+TEST_CASE("count") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.count("A") == 1);
+    REQUIRE(a.count("B") == 1);
+    REQUIRE(a.count("C") == 1);
+    REQUIRE(a.count("F") == 0);
+    REQUIRE(a.count("GAS") == 0);
+
+    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });
+
+    REQUIRE(a.count("GA") == 1);
+    REQUIRE(a.count("GO") == 1);
+
+    a.erase("GA");
+    REQUIRE(a.count("GA") == 0);
 }
 
-TEST_CASE("_ctor(cref, a)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    atype a;
-    hminta m2(m1, a);
-    REQUIRE(m1[1] == m2[1]);
-    REQUIRE(m1[3] == m2[3]);
-    REQUIRE(m1.size() == m2.size());
-    REQUIRE(m2.get_allocator().x == a.x);
+TEST_CASE("contains") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    REQUIRE(a.contains("A") == 1);
+    REQUIRE(a.contains("B") == 1);
+    REQUIRE(a.contains("C") == 1);
+    REQUIRE(a.contains("F") == 0);
+    REQUIRE(a.contains("GAS") == 0);
+
+    a.insert({ "GA", 20 });
+    a.insert({ "GO", 30 });
+
+    REQUIRE(a.contains("GA") == 1);
+    REQUIRE(a.contains("GO") == 1);
+
+    a.erase("GA");
+    REQUIRE(a.contains("GA") == 0);
 }
 
-TEST_CASE("_ctor(rref)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    hminta m2(std::move(m1));
-    REQUIRE(m2[1] == 2);
-    REQUIRE(m2[3] == 4);
-    REQUIRE(m1.get_allocator().x == m2.get_allocator().x);
+TEST_CASE("[]") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a["A"] == t++);
+    REQUIRE(a["B"] == t++);
+    REQUIRE(a["C"] == t++);
+    REQUIRE(a["D"] == t++);
+    REQUIRE(a["E"] == t++);
+    REQUIRE(a["F"] == 0);
+
+    a.insert({ "RAZA", t });
+    REQUIRE(a["RAZA"] == t);
 }
 
-TEST_CASE("_ctor(rref, a)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    atype a;
-    hminta m2(std::move(m1), a);
-    REQUIRE(m2[1] == 2);
-    REQUIRE(m2[3] == 4);
-    REQUIRE(m2.get_allocator().x == a.x);
+TEST_CASE("[] move") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a["A"] == t++);
+    REQUIRE(a["B"] == t++);
+    REQUIRE(a["C"] == t++);
+    REQUIRE(a["D"] == t++);
+    REQUIRE(a["E"] == t++);
+    REQUIRE(a["F"] == 0);
 }
 
-TEST_CASE("_=(cref)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    hminta m2;
-    m2 = m1;
-    REQUIRE(m1[1] == m2[1]);
-    REQUIRE(m1[3] == m2[3]);
-    REQUIRE(m1.size() == m2.size());
-    REQUIRE(m1.get_allocator().x != m2.get_allocator().x);
+TEST_CASE("at") {
+    hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a.at("A") == t++);
+    REQUIRE(a.at("B") == t++);
+    REQUIRE(a.at("C") == t++);
+    REQUIRE(a.at("D") == t++);
+    REQUIRE(a.at("E") == t++);
+
+    a["RAZA"] = t;
+    REQUIRE(a.at("RAZA") == t);
 }
 
-TEST_CASE("_=(rref)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hminta m1(l.begin(), l.end(), 666);
-    hminta m2;
-    m2 = std::move(m1);
-    REQUIRE(m2[1] == 2);
-    REQUIRE(m2[3] == 4);
-    REQUIRE(m2.size() == 2);
-    REQUIRE(m1.get_allocator().x != m2.get_allocator().x);
+TEST_CASE("at const") {
+    const hash_map<string, int> a = { {"A", 1}, {"B", 2}, {"C", 3}, {"D", 4}, {"E", 5} };
+    int t = 1;
+    REQUIRE(a.at("A") == t++);
+    REQUIRE(a.at("B") == t++);
+    REQUIRE(a.at("C") == t++);
+    REQUIRE(a.at("D") == t++);
+    REQUIRE(a.at("E") == t++);
 }
 
-TEST_CASE("_=(l)")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m;
-    m = l;
-    REQUIRE(m[1] == 2);
-    REQUIRE(m[3] == 4);
-    REQUIRE(m.size() == 2);
+TEST_CASE("rehash") {
+    hash_map<int, int> mapa;
+    REQUIRE(mapa.bucket_count() == 0);
+
+    mapa.rehash(3);
+    mapa[1] = 2;
+    mapa[2] = 3;
+    mapa[3] = 4;
+    REQUIRE(mapa.bucket_count() == 7);
+    mapa.rehash(3);
+    REQUIRE(mapa.bucket_count() == 7);
+
+    mapa.rehash(112);
+    REQUIRE(mapa.bucket_count() == 113);
 }
 
-TEST_CASE("_empty")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m(l);
-    REQUIRE(!m.empty());
-    m = hmint();
-    REQUIRE(m.empty());
-}
+TEST_CASE("oper ==") {
+    hash_map<int, int> mapa1 = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
+    hash_map<int, int> mapa2 = { {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5} };
 
-TEST_CASE("_begin_end")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m(l);
-    unordered_map<int, int> sm(m.begin(), m.end());
-    REQUIRE(sm.size() == 2);
-    REQUIRE(sm[1] == 2);
-    REQUIRE(sm[3] == 4);
-}
+    REQUIRE((mapa1 == mapa2) == true);
+    hash_map<int, int> mapa3 = { {1, 1}, {3, 3}, {4, 4} };
+    REQUIRE((mapa1 == mapa3) == false);
 
-TEST_CASE("_contains_count")
-{
-    std::initializer_list<pair<const int, int>> l{ {1, 2}, {3, 4} };
-    hmint m(l);
-    REQUIRE(m.contains(1));
-    REQUIRE(m.count(3) == 1);
-}
-
-TEST_CASE("_emplace")
-{
-    hmint m;
-    m.emplace(1, 2);
-    REQUIRE(m.contains(1));
-}
-
-TEST_CASE("_insert_copy_deleted")
-{
-    hash_map<int, declarator<cc, ca>> m;
-    pair<const int, declarator<cc, ca>> p(piecewise_construct, std::tuple<int>(1), std::tuple<>());
-    m.insert(std::move(p));
-}
-
-TEST_CASE("_try_emplace")
-{
-    hash_map<int, declarator<dc, cc, ca>> m;
-    m.try_emplace(1, 4);
-    REQUIRE(m.at(1).x == 4);
-}
-
-TEST_CASE("_swap")
-{
-    hash_map<int, declarator<dc, cc, ca>> m1;
-    hash_map<int, declarator<dc, cc, ca>> m2;
-    m1.try_emplace(1, 4);
-    m2.try_emplace(5, 2);
-    m1.swap(m2);
-    REQUIRE(m1.at(5).x == 2);
-    REQUIRE(m2.at(1).x == 4);
-}
-
-TEST_CASE("_merge_ref")
-{
-    hash_map<int, declarator<dc>> m1;
-    m1.try_emplace(1, 4);
-    hash_map<int, declarator<dc>> m2;
-    m2.try_emplace(5, 2);
-    m1.merge(m2);
-    REQUIRE(m1.at(5).x == 2);
-    REQUIRE(m2.size() == 0);
-}
-
-TEST_CASE("_merge_rref")
-{
-    hash_map<int, declarator<dc, cc, ca>> m1;
-    m1.try_emplace(1, 4);
-    hash_map<int, declarator<dc, cc, ca>> m2;
-    m2.try_emplace(5, 2);
-    m1.merge(std::move(m2));
-    REQUIRE(m1.at(5).x == 2);
-}
-
-TEST_CASE("_load_factor")
-{
-    hmint m;
-    for (int i = 0; i < 100; ++i)
-        m.insert({ i, 1 });
-    for (int i = 0; i < 100; ++i)
-        m.erase(i);
-    REQUIRE(m.load_factor() > 0.0f);
-}
-
-struct custom_hash
-{
-    vector<long long unsigned int> rnd;
-
-    custom_hash()
-    {
-        for (int i = 0; i < 1000000; ++i)
-            rnd.push_back(rand());
-    }
-
-    long long unsigned int operator()(int i) const
-    {
-        return rnd[i];
-    }
-};
-
-TEST_CASE("_stress")
-{
-    hash_map<int, int, custom_hash> m(1000000);
-    for (int i = 0; i < 1000000; ++i)
-    {
-        m.insert({ i, i * 3 });
-    }
-    for (int i = 100; i < 999999; ++i)
-    {
-        m.erase(i);
-    }
-    for (int i = 0; i < 1000000; ++i)
-    {
-        m.insert({ i, i * 3 });
-    }
-    for (int i = 0; i < 1000000; ++i)
-    {
-        m.insert({ i, i * 3 });
-    }
-    for (int i = 100; i < 999999; ++i)
-    {
-        m.erase(i);
-    }
-    for (int i = 100; i < 999999; ++i)
-    {
-        m.erase(i);
-    }
-    for (int i = 0; i < 100; ++i)
-        REQUIRE(m[i] == i * 3);
-    REQUIRE(m[999999] == 2999997);
-    REQUIRE(m.size() == 101);
+    mapa3[2] = 2;
+    mapa3[5] = 5;
+    REQUIRE((mapa1 == mapa2) == true);
 }
