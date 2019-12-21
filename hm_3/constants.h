@@ -4,6 +4,11 @@
 #define KEY_ENTER_ 10
 // ncurses //
 
+// options //
+#define OPTIONS_HEIGHT 3
+#define OPTIONS_WIDTH 28
+// options //
+
 // menu //
 #define MENU_HEIGHT 5
 #define MENU_WIDTH 10

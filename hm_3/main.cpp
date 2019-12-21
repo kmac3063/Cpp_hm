@@ -71,7 +71,7 @@ int main() {
             showCredit(windowHeight, windowWidth);
             break;
         case MENU_OPTIONS:
-            options.open();
+            options.open(windowHeight, windowWidth);
             break;
         }
         menu.select();
