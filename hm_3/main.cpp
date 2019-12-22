@@ -2,7 +2,8 @@
 #include <algorithm>
 #include <string>
 #include <thread>
-#include <Windows.h>
+#include <Windows.h>#include <vector>
+#include <fstream>
 
 #include "curses.h"
 #include "panel.h"
@@ -11,18 +12,20 @@
 #include "menu.h"
 #include "Visual.h"
 #include "Options.h"
+#include "Game.h"
 
-void showCredit(int windowHeight, int windowWidth) {
+void showMessage(std::string message) {
     clear();
-    const std::string creatorName = "Creator: Lancov Igor";
-    
-    int x1 = (windowWidth - creatorName.length()) / 2 - 1;
-    int x2 = x1 + creatorName.length() + 1;
+    int windowHeight, windowWidth;
+    getmaxyx(stdscr, windowHeight, windowWidth);
+
+    int x1 = (windowWidth - message.length()) / 2 - 1;
+    int x2 = x1 + message.length() + 1;
     int y1 = windowHeight / 2 - 1;
     int y2 = windowHeight / 2 + 1;
 
     Visual::drawBorder(y1, y2, x1, x2);
-    mvaddstr(y1 + 1, x1 + 1, creatorName.c_str());
+    mvaddstr(y1 + 1, x1 + 1, message.c_str());
 
     while (getch() == ERR)
         Visual::drawRain(y1, y2, x1, x2);
@@ -31,53 +34,62 @@ void showCredit(int windowHeight, int windowWidth) {
     clear();
 }
 
-int main() {
+void init_() {
     initscr();
     noecho();
     keypad(stdscr, true);
     curs_set(0);
     nodelay(stdscr, TRUE);
+}
+
+int main() {
+    init_();
 
     int windowHeight, windowWidth;
-    
     getmaxyx(stdscr, windowHeight, windowWidth);
 
-    Menu menu(windowHeight, windowWidth);
+    Menu menu;
     Options options;
+    Game* game = nullptr;
+    auto configFileName = "Config/Config.cfg";
+    auto saveFileName = "Save/Save.save";
 
     menu.select();
     while (menu.getSelected() != MENU_EXIT) {
         switch (menu.getSelected())
         {
         case MENU_NEWGAME:
-            /*Game game;
-            game.startNewGame();*/
+            game = new Game(options);
+            
+            game->startGame();
             break;
+        
         case MENU_CONTINUE:
-            /*Game game;
-            Save save;
-            std::string fileName;
-            try {
-                scanw("%s", &fileName);
-                save.loadFromFile(fileName);
+            game = new Game(options);
+            if (game->loadSaveFromFile(saveFileName)) {
+                game->startGame();
             }
-            catch (std::exception e){
-                printw("File \"%s\" not found or corrupt.", fileName);
-                continue;
+            else {
+                showMessage("The save file's, like, corrupted or something.");
             }
-            game.start(save);*/
             break;
+
         case MENU_CREDIT:
-            showCredit(windowHeight, windowWidth);
+            showMessage("Creator: Lancov Igor");
             break;
+
         case MENU_OPTIONS:
-            options.open(windowHeight, windowWidth);
+            options.open();
             break;
         }
         menu.select();
     }
 
+    if (game != nullptr)
+        delete game;
+
     clear();
+    refresh();
     endwin();
     return 0;
 }

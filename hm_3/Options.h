@@ -2,35 +2,29 @@
 
 class Options {
 public:
-    void open(int windowHeight, int windowWidth) {
+    Options() {
+        int height, width;
+        getmaxyx(stdscr, height, width);
+        y = (height - OPTIONS_HEIGHT) / 2;
+        x = (width - OPTIONS_WIDTH) / 2;
+    }
+
+    void open() {
         clear();
 
-        const std::string info1 = "To change Press '<-' or '->'";
-        const std::string info2 = "To exit, press 'ESC'";
-        const std::string settings[] = {"Difficulty = " + dif};
-
-        int x1 = (windowWidth - OPTIONS_WIDTH) / 2 - 1;
+        int x1 = x - 1;
         int x2 = x1 + OPTIONS_WIDTH + 1;
-        int y1 = (windowHeight + OPTIONS_HEIGHT) / 2 - 1;
+        int y1 = y - 1;
         int y2 = y1 + OPTIONS_HEIGHT + 1;
 
-        Visual::drawBorder(y1, y2, x1, x2);
-        mvaddstr(y1 + 1, x1 + 1, info1.c_str());
-        mvaddstr(y1 + 2, x1 + 1, info2.c_str());
-        for (auto i = 0; i < OPTIONS_HEIGHT - 2; i++) {
-            if (i == selected_id)
-                mvaddch(y1 + 3 + i, x1 + 1, '>');
-            else
-                mvaddch(y1 + 3 + i, x1 + 1, ' ');
 
-            mvaddstr(y1 + 3 + i, x1 + 2, settings[i].c_str());
-        }
-
-        char g;
-        while ((g = getch()) != KEY_ESCAPE_) {
+        bool exit = false;
+        while (!exit) {
+            drawOptions();
+            Visual::drawBorder(y1, y2, x1, x2);
             Visual::drawRain(y1, y2, x1, x2);
 
-            switch (g) {
+            switch (getch()) {
             case KEY_UP:
                 if (--selected_id < 0)
                     selected_id += OPTIONS_HEIGHT - 2;
@@ -40,15 +34,71 @@ public:
                     selected_id = 0;
                 break;
             case KEY_LEFT:
-                // Изменить ИЗИ на число, чтобы в других настройках мог менять нормально.
+                switch (selected_id) {
+                case 0:
+                    dif = OPTIONS_EASY;
+                    break;
+                case 1:
+                    timerOn = false;
+                }
+                break;
+            case KEY_RIGHT:
+                switch (selected_id) {
+                case 0:
+                    dif = OPTIONS_HARD;
+                    break;
+                case 1:
+                    timerOn = true;
+                }
+                break;
+            case KEY_ESCAPE_:
+                exit = true;
+                break;
             }
+
+            clear();
         }
 
         refresh();
-        clear();
     }
 
+    int getDif() const { return dif; };
+    bool getTimerOn() const { return timerOn; };
+
 private:
+    void drawOptions() {
+        std::string difStr = "EASY", timerStr = "OFF";
+        if (dif == OPTIONS_HARD)
+            difStr = "HARD";
+        if (timerOn)
+            timerStr = "ON";
+
+        std::string settings[] = {
+            "Difficulty = " + difStr,
+            "Show timer = " + timerStr
+        };
+
+        mvaddstr(y, x, info1.c_str());
+        mvaddstr(y + 1, x, info2.c_str());
+        
+        for (auto i = 0; i < OPTIONS_HEIGHT - 2; i++) {
+            if (i == selected_id)
+                mvaddch(y + 2 + i, x, '>');
+            else
+                mvaddch(y + 2 + i, x, ' ');
+
+            mvaddstr(y + 2 + i, x + 1, settings[i].c_str());
+        }
+
+        refresh();
+    }
+
+    int x, y;
+
+    const std::string info1 = "To change Press '<-' or '->'";
+    const std::string info2 = "To exit, press 'ESC'";
+
     int selected_id = 0;
-    std::string dif = "EASY";
+    int dif = OPTIONS_EASY;
+    bool timerOn = false;
 };

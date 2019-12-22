@@ -5,8 +5,10 @@
 // ncurses //
 
 // options //
-#define OPTIONS_HEIGHT 3
+#define OPTIONS_HEIGHT 4
 #define OPTIONS_WIDTH 28
+#define OPTIONS_EASY 0
+#define OPTIONS_HARD 1
 // options //
 
 // menu //
