@@ -12,7 +12,7 @@ class Options {
         void setDefault() {
             Dif = OPTIONS_EASY;
             TimerOn = true;
-            RainOn = true;
+            RainOn = false;
         }
 
         void open() {

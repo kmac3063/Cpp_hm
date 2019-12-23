@@ -5,7 +5,8 @@
 namespace GameObject {
 class Character : public GameObject {
 public:
-    Character(const int& HP) : hp(HP) {}
+    Character(const int& HP, const int& Dmg, const int64_t& SleepTimeMs) : 
+        hp(HP), dmg(Dmg), sleepTimeMs(SleepTimeMs)  {}
 
     virtual void dir(const int& dy_, const int& dx_) {
         dy = dy_;
@@ -13,11 +14,15 @@ public:
     }
 
     virtual void move() {
-        if (dx == 0 && dy == 0) return;
+        uint64_t timeNowMs = clock();
+        if (timeNowMs < lastUseMs + sleepTimeMs) {
+            return;
+        }
         y += dy;
         x += dx;
 
         dy = dx = 0;
+        lastUseMs = clock();
     }
     
     void setHP(int hp_) {
@@ -36,26 +41,27 @@ public:
         hp = min(HP_TABLE['H'], hp + heal);
     }
 protected:
-    int hp;
+    const int64_t sleepTimeMs;
+    int64_t lastUseMs = -sleepTimeMs;
+
+    int hp, dmg;
     int dx = 0, dy = 0;
 };
 
 class Hero : public Character {
 public:
-    Hero() : Character(HP_TABLE[getSymbOnMap()]) {}
+    Hero() : Character(HP_TABLE[getSymbOnMap()], 
+        DMG_TABLE[getSymbOnMap()], 
+        SPEEPTIME_TABLE[getSymbOnMap()]) {}
 
     virtual char getSymbOnMap() {
         return 'H';
     }
 
     virtual void move() {
-        if (dx == 0 && dy == 0) return;
-        y += dy;
-        x += dx;
-        
-        lastDir = { dy, dx };
-
-        dy = dx = 0;
+        if (dy != 0 || dx != 0)
+            lastDir = { dy, dx };
+        Character::move();
     }
 
     void showDieMessage() {
@@ -72,12 +78,15 @@ private:
 
 class Friendly : public Character {
 public:
-    Friendly(int hp) : Character(hp) {}
+    Friendly(const int& HP, const int& Dmg, const int64_t& SleepTimeMs)
+        : Character(HP, Dmg, SleepTimeMs) {}
 };
 
 class Princess : public Friendly {
 public:
-    Princess() : Friendly(HP_TABLE[getSymbOnMap()]) {}
+    Princess() : Friendly(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SPEEPTIME_TABLE[getSymbOnMap()]) {}
 
     virtual char getSymbOnMap() {
         return 'P';
@@ -87,12 +96,15 @@ public:
 
 class Enemy : public Character {
 public:
-    Enemy(int hp) : Character(hp) {}
+    Enemy(const int& HP, const int& Dmg, const int64_t& SleepTimeMs) 
+        : Character(HP, Dmg, SleepTimeMs) {}
 };
 
 class Zombie : public Enemy {
 public:
-    Zombie() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+    Zombie() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SPEEPTIME_TABLE[getSymbOnMap()]) {}
 
     virtual char getSymbOnMap() {
         return 'Z';
@@ -101,7 +113,9 @@ public:
 
 class Dragon : public Enemy {
 public:
-    Dragon() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+    Dragon() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SPEEPTIME_TABLE[getSymbOnMap()]) {}
 
     virtual char getSymbOnMap() {
         return 'D';
@@ -110,13 +124,13 @@ public:
 
 class Projectile : public Enemy {
 public:
-    Projectile() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+    Projectile() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SPEEPTIME_TABLE[getSymbOnMap()]) {}
 
     virtual void dir(const int& dy_, const int& dx_) {
-        dx = dx_;
-        dy = dy_;
-
-        if (dy_ == 0 && dx_ == 0)
+        Enemy::dir(dy_, dx_);
+        if (dy == 0 && dx == 0)
             dx = 1;
     }
 
@@ -125,8 +139,14 @@ public:
     }
     
     virtual void move() {
+        uint64_t timeNowMs = clock();
+        if (timeNowMs < lastUseMs + sleepTimeMs) {
+            return;
+        }
         y += dy;
         x += dx;
+
+        lastUseMs = clock();
     }
 };
 

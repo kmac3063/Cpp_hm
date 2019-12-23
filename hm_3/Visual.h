@@ -16,7 +16,7 @@ namespace Visual {
     }
 
     void drawRain(const int& y1, const int& y2,
-                const int& x1, const int& x2, const int& sleepTime = 40) {
+                const int& x1, const int& x2) {
         int maxX, maxY;
         getmaxyx(stdscr, maxY, maxX);
 
@@ -38,11 +38,10 @@ namespace Visual {
             xy[i] = { rX, rY };
         }
         refresh();
-        Sleep(sleepTime);
-
-        for (auto p : xy) {
-            mvaddch(p.y, p.x, ' ');
-        }
+        
+        if (clock() % 20) // Ёффект прибывающего дожд€
+            for (auto p : xy) 
+                mvaddch(p.y, p.x, ' ');
     }
 
     void showMessage(std::string message) {

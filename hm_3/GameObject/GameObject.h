@@ -5,6 +5,7 @@ namespace GameObject {
 
 std::map<char, int> HP_TABLE;
 std::map<char, int> DMG_TABLE;
+std::map<char, int64_t> SPEEPTIME_TABLE;
 
 class GameObject {
 public:

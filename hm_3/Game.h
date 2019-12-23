@@ -46,12 +46,12 @@ public:
 
             Visual::drawBorder(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
 
-            if (Options::TimerOn) {
-                time_t thisTime = time(NULL);
-                Visual::drawTimer(y1 - 1, x1, thisTime - startTime);
-            }
             if (Options::RainOn)
                 Visual::drawRain(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
+            if (Options::TimerOn) {
+                time_t elapsedTime = time(NULL) - startTime;
+                Visual::drawTimer(y1 - 1, x1, elapsedTime);
+            }
             //drawInterface();
             map->drawMap();
             map->drawObjects(objects);
@@ -136,12 +136,13 @@ private:
             file >> n_obj;
             for (int i = 0; i < n_obj; i++) {
                 char ch;
-                int hp, dmg;
+                int hp, dmg, sleepTms;
                 
-                file >> ch >> hp >> dmg;
+                file >> ch >> hp >> dmg >> sleepTms;
                 
                 GameObject::HP_TABLE[ch] = hp; 
                 GameObject::DMG_TABLE[ch] = dmg;
+                GameObject::SPEEPTIME_TABLE[ch] = sleepTms;
             }
 
             if (GameObject::HP_TABLE.size() != n_obj)
