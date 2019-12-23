@@ -15,9 +15,9 @@ public:
         x = x_;
     }
 
-    virtual int getCoordX() { return x; }
     virtual int getCoordY() { return y; }
+    virtual int getCoordX() { return x; }
 protected:
-    int x, y;
+    int y, x;
 };
 }  // namespace GameObject

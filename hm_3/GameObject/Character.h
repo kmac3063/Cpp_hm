@@ -5,10 +5,19 @@
 namespace GameObject {
 class Character : public GameObject {
 public:
-    void die();
-    void move(int dy, int dx) {
+    Character(const int& HP) : hp(HP) {}
+
+    /*virtual*/ void dir(int dy_, int dx_) {
+        dy = dy_;
+        dx = dx_;
+    }
+
+    virtual void move() {
+        if (dx == 0 && dy == 0) return;
         y += dy;
         x += dx;
+
+        dy = dx = 0;
     }
     
     void setHP(int hp_) {
@@ -17,8 +26,10 @@ public:
 
     void damage(int damage) {
         hp -= damage;
-        if (hp <= 0)
-            die();
+    }
+
+    bool live() {
+        return hp > 0;
     }
 
     void heal(int heal) {
@@ -26,25 +37,48 @@ public:
     }
 protected:
     int hp;
+    int dx = 0, dy = 0;
 };
 
 class Hero : public Character {
 public:
+    Hero() : Character(HP_TABLE[getSymbOnMap()]) {}
+
     virtual char getSymbOnMap() {
         return 'H';
     }
 
-    void die() {
+    virtual void move() {
+        if (dx == 0 && dy == 0) return;
+        y += dy;
+        x += dx;
+        
+        lastDir = { dy, dx };
+
+        dy = dx = 0;
+    }
+
+    void showDieMessage() {
         Visual::showMessage("YOU DIE");
     }
+
+    auto getLastDir() {
+        return lastDir;
+    }
+private:
+    std::pair<int, int> lastDir;
 };
 
 
 class Friendly : public Character {
-
+public:
+    Friendly(int hp) : Character(hp) {}
 };
 
 class Princess : public Friendly {
+public:
+    Princess() : Friendly(HP_TABLE[getSymbOnMap()]) {}
+
     virtual char getSymbOnMap() {
         return 'P';
     }
@@ -52,18 +86,41 @@ class Princess : public Friendly {
 
 
 class Enemy : public Character {
-
+public:
+    Enemy(int hp) : Character(hp) {}
 };
 
 class Zombie : public Enemy {
+public:
+    Zombie() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+
     virtual char getSymbOnMap() {
         return 'Z';
     }
 };
 
 class Dragon : public Enemy {
+public:
+    Dragon() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+
     virtual char getSymbOnMap() {
         return 'D';
+    }
+};
+
+class Projectile : public Enemy {
+public:
+    Projectile() : Enemy(HP_TABLE[getSymbOnMap()]) {}
+
+    //virtual void dir()
+
+    virtual char getSymbOnMap() {
+        return '*';
+    }
+    
+    void move() {
+        y += dy;
+        x += dx;
     }
 };
 

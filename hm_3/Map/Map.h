@@ -35,10 +35,6 @@ class Map {
         return height;
     }
 
-    void addObjOnMap(GameObject::GameObject* obj) {
-        objects.push_back(obj);
-    }
-
     void drawMap() {
         const int y = getYXForDrawing().first;
         const int x = getYXForDrawing().second;
@@ -52,7 +48,7 @@ class Map {
         refresh();
     };
 
-    void drawObjects() {
+    void drawObjects(const std::vector<GameObject::GameObject*>& objects) {
         const int y = getYXForDrawing().first;
         const int x = getYXForDrawing().second;
 
@@ -73,6 +69,5 @@ class Map {
     int width;
     int height;
     std::vector<std::vector<char>> map;
-    std::vector<GameObject::GameObject*> objects;
 };
 }

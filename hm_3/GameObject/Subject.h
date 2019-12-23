@@ -11,10 +11,6 @@ class FixedSubject : public Subject {
 
 };
 
-class Projectile : public Subject {
-
-};
-
 class CollectItem : public Subject {
 protected:
     void remove();

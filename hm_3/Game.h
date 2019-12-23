@@ -26,19 +26,23 @@ public:
                 delete map;
             throw;
         }
-
+        int a = 2;
         GameObject::Hero* hero = new GameObject::Hero();
         hero->setPos(5, 5);
-        map->addObjOnMap(hero);
+
+        characters.push_back(hero);
+        objects.push_back(hero);
 
         bool gameOn = true;
-        while (gameOn) {
+        while (gameOn && hero->live()) {
             int maxX, maxY;
             getmaxyx(stdscr, maxY, maxX);
+            
             int x1 = (maxX - map->getWidth()) / 2;
             int y1 = (maxY - map->getHeight()) / 2;
             int x2 = x1 + map->getWidth();
             int y2 = y1 + map->getHeight();
+
             Visual::drawBorder(y1 - 1, y2, x1 - 1, x2);
 
             if (Options::RainOn)
@@ -47,36 +51,49 @@ public:
                 //Visual::drawTimer();
             //drawInterface();
             map->drawMap();
-            map->drawObjects();
+            map->drawObjects(objects);
             
             switch (getch()) {
             case KEY_LEFT:
             case 'a':
             case 'A':
-                hero->move(0, -1);
+                hero->dir(0, -1);
                 break;
 
             case KEY_UP:
             case 'w':
             case 'W':
-                hero->move(-1, 0);
+                hero->dir(-1, 0);
                 break;
 
             case KEY_RIGHT:
             case 'd':
             case 'D':
-                hero->move(0, 1);
+                hero->dir(0, 1);
                 break;
 
             case KEY_DOWN:
             case 's':
             case 'S':
-                hero->move(1, 0);
+                hero->dir(1, 0);
                 break;
 
-            case ' ':
-                //спавн прожектайл и двигаем его по move(dirX, dirY);
-                break;
+            case ' ': {
+                GameObject::Projectile* bullet = new GameObject::Projectile();
+
+                int heroX = hero->getCoordX();
+                int heroY = hero->getCoordY();
+
+                int herody = hero->getLastDir().first;
+                int herodx = hero->getLastDir().second;
+
+                bullet->dir(herody, herodx);
+                bullet->setPos(heroY + herody, heroX + herodx);
+
+                characters.push_back(bullet);
+                objects.push_back(bullet);
+            }
+            break;
 
             case KEY_ESCAPE_:
                 //save in file
@@ -84,10 +101,13 @@ public:
                 break;
             }
             
-            /*updateCharacters();
-            collideAll();*/
+            updateCharactersLoc();
+            collideAll();
         }
 
+        if (!hero->live()) {
+            hero->showDieMessage();
+        }
         clear();
     }
 private:
@@ -139,6 +159,18 @@ private:
         }
     }
 
+    void updateCharactersLoc() {
+        for (GameObject::Character* o : characters) {
+            o->move();
+        }
+    }
+
+    void collideAll() {
+
+    }
+
+    std::vector<GameObject::GameObject*> objects;
+    std::vector<GameObject::Character*> characters;
     Map::Map* map;
 };
 }
