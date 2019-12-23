@@ -33,6 +33,7 @@ public:
         characters.push_back(hero);
         objects.push_back(hero);
 
+        time_t startTime = time(NULL);
         bool gameOn = true;
         while (gameOn && hero->live()) {
             int maxX, maxY;
@@ -43,12 +44,14 @@ public:
             int x2 = x1 + map->getWidth();
             int y2 = y1 + map->getHeight();
 
-            Visual::drawBorder(y1 - 1, y2, x1 - 1, x2);
+            Visual::drawBorder(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
 
+            if (Options::TimerOn) {
+                time_t thisTime = time(NULL);
+                Visual::drawTimer(y1 - 1, x1, thisTime - startTime);
+            }
             if (Options::RainOn)
-                Visual::drawRain(y1 - 1, y2, x1 - 1, x2);
-            if (Options::TimerOn) {}
-                //Visual::drawTimer();
+                Visual::drawRain(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
             //drawInterface();
             map->drawMap();
             map->drawObjects(objects);

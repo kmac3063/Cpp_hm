@@ -22,10 +22,15 @@ public:
 
             switch (getch())
             {
+            case 'w':
+            case 'W':
             case KEY_UP:
                 if (--selected_id < 0 )
                     selected_id += MENU_HEIGHT;
                 break;
+
+            case 's':
+            case 'S':
             case KEY_DOWN:
                 if (++selected_id == MENU_HEIGHT)
                     selected_id = 0;

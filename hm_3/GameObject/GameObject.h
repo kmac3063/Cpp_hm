@@ -15,8 +15,8 @@ public:
         x = x_;
     }
 
-    virtual int getCoordY() { return y; }
-    virtual int getCoordX() { return x; }
+    int getCoordY() { return y; }
+    int getCoordX() { return x; }
 protected:
     int y, x;
 };

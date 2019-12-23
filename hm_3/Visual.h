@@ -65,4 +65,18 @@ namespace Visual {
         refresh();
         clear();
     }
+
+    void drawTimer(const int& y, const int& x, const time_t& seconds) {
+        int minut = seconds / 60;
+        int sec = seconds - minut * 60;
+        std::string S = "";
+        if (minut < 10)
+            S += '0';
+        S += std::to_string(minut) + " : ";
+        if (sec < 10)
+            S += '0';
+        S += std::to_string(sec);
+
+        mvaddstr(y, x, S.c_str());
+    }
 }

@@ -7,7 +7,7 @@ class Character : public GameObject {
 public:
     Character(const int& HP) : hp(HP) {}
 
-    /*virtual*/ void dir(int dy_, int dx_) {
+    virtual void dir(const int& dy_, const int& dx_) {
         dy = dy_;
         dx = dx_;
     }
@@ -112,13 +112,19 @@ class Projectile : public Enemy {
 public:
     Projectile() : Enemy(HP_TABLE[getSymbOnMap()]) {}
 
-    //virtual void dir()
+    virtual void dir(const int& dy_, const int& dx_) {
+        dx = dx_;
+        dy = dy_;
+
+        if (dy_ == 0 && dx_ == 0)
+            dx = 1;
+    }
 
     virtual char getSymbOnMap() {
         return '*';
     }
     
-    void move() {
+    virtual void move() {
         y += dy;
         x += dx;
     }
