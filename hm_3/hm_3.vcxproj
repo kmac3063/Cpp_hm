@@ -128,7 +128,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameObject\Character.h" />
+    <ClInclude Include="GameObject\Subject.h" />
+    <ClInclude Include="GameObject\GameObject.h" />
+    <ClInclude Include="Map\Map.h" />
     <ClInclude Include="Options.h" />
+    <ClInclude Include="OptionsInterface.h" />
     <ClInclude Include="Visual.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="curses.h" />

@@ -1,6 +1,7 @@
 #pragma once
 #include "Visual.h"
 
+namespace Menu {
 class Menu {
 public:
     Menu() {
@@ -16,7 +17,8 @@ public:
 
         while (!exit) {
             drawMenu();
-            Visual::drawRain(y - 1, y + MENU_HEIGHT, x - 1, x + MENU_WIDTH);
+            if (Options::RainOn)
+                Visual::drawRain(y - 1, y + MENU_HEIGHT, x - 1, x + MENU_WIDTH);
 
             switch (getch())
             {
@@ -73,3 +75,20 @@ private:
     };
 
 };
+}
+
+//namespace A {
+//
+//}
+//
+////bool bar() {
+////    return A::foo();
+////}
+//
+//namespace A {
+//    class B {
+//        friend bool foo();
+//    };
+//
+//    bool foo() { return true; };
+//}

@@ -4,35 +4,23 @@
 #include <thread>
 #include <Windows.h>#include <vector>
 #include <fstream>
+#include <map>
+
 
 #include "curses.h"
 #include "panel.h"
 
+#include "Options.h"
 #include "constants.h"
 #include "menu.h"
 #include "Visual.h"
-#include "Options.h"
+#include "OptionsInterface.h"
+
+#include "GameObject/GameObject.h"
+#include "GameObject/Character.h"
+#include "GameObject/Subject.h"
+#include "Map/Map.h"
 #include "Game.h"
-
-void showMessage(std::string message) {
-    clear();
-    int windowHeight, windowWidth;
-    getmaxyx(stdscr, windowHeight, windowWidth);
-
-    int x1 = (windowWidth - message.length()) / 2 - 1;
-    int x2 = x1 + message.length() + 1;
-    int y1 = windowHeight / 2 - 1;
-    int y2 = windowHeight / 2 + 1;
-
-    Visual::drawBorder(y1, y2, x1, x2);
-    mvaddstr(y1 + 1, x1 + 1, message.c_str());
-
-    while (getch() == ERR)
-        Visual::drawRain(y1, y2, x1, x2);
-
-    refresh();
-    clear();
-}
 
 void init_() {
     initscr();
@@ -48,34 +36,41 @@ int main() {
     int windowHeight, windowWidth;
     getmaxyx(stdscr, windowHeight, windowWidth);
 
-    Menu menu;
-    Options options;
-    Game* game = nullptr;
-    auto configFileName = "Config/Config.cfg";
-    auto saveFileName = "Save/Save.save";
+    Menu::Menu menu;
+    Options::Options options;
+    options.setDefault();
+    Game::Game* game = nullptr;
 
     menu.select();
     while (menu.getSelected() != MENU_EXIT) {
         switch (menu.getSelected())
         {
         case MENU_NEWGAME:
-            game = new Game(options);
+            game = new Game::Game();
             
-            game->startGame();
+            try {
+                game->startGame();
+            }
+            catch (std::exception e) {
+                Visual::showMessage(e.what());
+            }
             break;
         
         case MENU_CONTINUE:
-            game = new Game(options);
-            if (game->loadSaveFromFile(saveFileName)) {
+            game = new Game::Game();
+            
+            try {
+                game->loadSaveFile();
                 game->startGame();
+            } 
+            catch (std::exception e) {
+                Visual::showMessage(e.what());
             }
-            else {
-                showMessage("The save file's, like, corrupted or something.");
-            }
+
             break;
 
         case MENU_CREDIT:
-            showMessage("Creator: Lancov Igor");
+            Visual::showMessage("Creator: Lancov Igor");
             break;
 
         case MENU_OPTIONS:
@@ -93,3 +88,5 @@ int main() {
     endwin();
     return 0;
 }
+
+
