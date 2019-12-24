@@ -7,13 +7,16 @@ class Subject : public GameObject {
         
 };
 
-class FixedSubject : public Subject {
-
+class Wall : public Subject {
+    virtual char getSymbOnMap() {
+        return '#';
+    }
 };
 
-class CollectItem : public Subject {
-protected:
-    void remove();
+class Medkit : public Subject {
+    virtual char getSymbOnMap() {
+        return '+';
+    }
 };
 
 }  // namespace GameObject

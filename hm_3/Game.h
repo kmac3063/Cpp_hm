@@ -26,36 +26,17 @@ public:
                 delete map;
             throw;
         }
-        int a = 2;
-        GameObject::Hero* hero = new GameObject::Hero();
-        hero->setPos(5, 5);
 
-        characters.push_back(hero);
+        hero = new GameObject::Hero();
+        hero->setPos(5, 5);
         objects.push_back(hero);
 
-        time_t startTime = time(NULL);
+        startTime = time(NULL);
+        
         bool gameOn = true;
         while (gameOn && hero->live()) {
-            int maxX, maxY;
-            getmaxyx(stdscr, maxY, maxX);
-            
-            int x1 = (maxX - map->getWidth()) / 2;
-            int y1 = (maxY - map->getHeight()) / 2;
-            int x2 = x1 + map->getWidth();
-            int y2 = y1 + map->getHeight();
+            drawAll();
 
-            Visual::drawBorder(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
-
-            if (Options::RainOn)
-                Visual::drawRain(y1 - 2, y2 + 1, x1 - 2, x2 + 2);
-            if (Options::TimerOn) {
-                time_t elapsedTime = time(NULL) - startTime;
-                Visual::drawTimer(y1 - 1, x1, elapsedTime);
-            }
-            //drawInterface();
-            map->drawMap();
-            map->drawObjects(objects);
-            
             switch (getch()) {
             case KEY_LEFT:
             case 'a':
@@ -82,19 +63,7 @@ public:
                 break;
 
             case ' ': {
-                GameObject::Projectile* bullet = new GameObject::Projectile();
-
-                int heroX = hero->getCoordX();
-                int heroY = hero->getCoordY();
-
-                int herody = hero->getLastDir().first;
-                int herodx = hero->getLastDir().second;
-
-                bullet->dir(herody, herodx);
-                bullet->setPos(heroY + herody, heroX + herodx);
-
-                characters.push_back(bullet);
-                objects.push_back(bullet);
+                hero->doShot();
             }
             break;
 
@@ -104,16 +73,49 @@ public:
                 break;
             }
             
-            updateCharactersLoc();
-            collideAll();
+            updateObjects();
+
+            collideObjects();
         }
 
         if (!hero->live()) {
             hero->showDieMessage();
         }
+
         clear();
     }
 private:
+    void drawAll() {
+        int maxX, maxY;
+        getmaxyx(stdscr, maxY, maxX);
+
+        int x1 = (maxX - map->getWidth()) / 2;
+        int y1 = (maxY - map->getHeight()) / 2;
+        int x2 = x1 + map->getWidth();
+        int y2 = y1 + map->getHeight();
+
+        Visual::drawBorder(y1 - 2, y2 + 1, x1 - 3, x2 + 2);
+
+        if (Options::RainOn)
+            Visual::drawRain(y1 - 2, y2 + 1, x1 - 3, x2 + 2);
+        if (Options::TimerOn) {
+            time_t elapsedTime = time(NULL) - startTime;
+            Visual::drawTimer(y1 - 1, x1, elapsedTime);
+        }
+        
+        map->drawMap();
+        drawInterface(y2, x1);
+        map->drawObjects(objects);
+    }
+
+    void drawInterface(const int& y, const int& x) {
+        auto hpStr = std::to_string(hero->getHP());
+        auto scoreStr = std::to_string(hero->getScore());
+        mvaddstr(y, x, ("HP : " + hpStr + " SCORE : " + scoreStr).c_str());
+        refresh();
+    }
+
+
     void init() {
         map = new Map::Map();
         try {
@@ -138,15 +140,22 @@ private:
                 char ch;
                 int hp, dmg, sleepTms;
                 
-                file >> ch >> hp >> dmg >> sleepTms;
+                file >> ch;
+
+                if (ch == '#')
+                    continue;
+                if (ch == '+') {
+                    file >> hp;
+                    GameObject::HP_TABLE[ch] = hp;
+                    continue;
+                }
                 
+                file >> hp >> dmg >> sleepTms;
+
                 GameObject::HP_TABLE[ch] = hp; 
                 GameObject::DMG_TABLE[ch] = dmg;
-                GameObject::SPEEPTIME_TABLE[ch] = sleepTms;
+                GameObject::SLEEPTIME_TABLE[ch] = sleepTms;
             }
-
-            if (GameObject::HP_TABLE.size() != n_obj)
-                throw;
         }
         catch (std::exception e) {
             throw std::exception("The config file's, like, corrupted or something.");
@@ -156,25 +165,46 @@ private:
 
     void readMap()  {
         try {
-            map->readMapFromFile();
+             map->readMapFromFile(objects);
         }
         catch (std::exception e) {
             throw;
         }
     }
 
-    void updateCharactersLoc() {
-        for (GameObject::Character* o : characters) {
-            o->move();
+    void updateObjects() {
+        GameObject::GameObject* newObj = nullptr;
+        std::vector<GameObject::GameObject*> newObjects;
+        for (auto o : objects) {
+            o->update(newObj);
+            
+            if (newObj != nullptr) {
+                newObjects.push_back(newObj);
+            }
+
+            newObj = nullptr;
+        }
+
+        for (int i = 0; i < newObjects.size(); i++)
+            objects.push_back(newObjects[i]);
+    }
+
+    void collideObjects() {
+        for (int i = 0; i < objects.size() - 1; i++) {
+            for (int j = i + 1; j < objects.size(); j++) {
+                if (objects[i]->getCoordX() == objects[j]->getCoordX()
+                    && objects[i]->getCoordY() == objects[j]->getCoordY()){
+                    //objects[i].collide(objects[j]);
+                }
+            }
         }
     }
 
-    void collideAll() {
-
-    }
+    time_t startTime;
 
     std::vector<GameObject::GameObject*> objects;
-    std::vector<GameObject::Character*> characters;
     Map::Map* map;
+
+    GameObject::Hero* hero;
 };
 }

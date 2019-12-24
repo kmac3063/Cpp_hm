@@ -77,5 +77,6 @@ namespace Visual {
         S += std::to_string(sec);
 
         mvaddstr(y, x, S.c_str());
+        refresh();
     }
 }

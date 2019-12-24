@@ -19,6 +19,7 @@
 #include "GameObject/GameObject.h"
 #include "GameObject/Character.h"
 #include "GameObject/Subject.h"
+#include "Factory.h"
 #include "Map/Map.h"
 #include "Game.h"
 
