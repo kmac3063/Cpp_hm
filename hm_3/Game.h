@@ -27,9 +27,7 @@ public:
             throw;
         }
 
-        hero = new GameObject::Hero();
-        hero->setPos(5, 5);
-        objects.push_back(hero);
+        hero = GameObject::hero;
 
         startTime = time(NULL);
         
@@ -185,13 +183,13 @@ private:
             newObj = nullptr;
         }
 
-        for (int i = 0; i < newObjects.size(); i++)
+        for (size_t i = 0; i < newObjects.size(); i++)
             objects.push_back(newObjects[i]);
     }
 
     void collideObjects() {
-        for (int i = 0; i < objects.size() - 1; i++) {
-            for (int j = i + 1; j < objects.size(); j++) {
+        for (size_t i = 0; i < objects.size() - 1; i++) {
+            for (size_t j = i + 1; j < objects.size(); j++) {
                 if (objects[i]->getCoordX() == objects[j]->getCoordX()
                     && objects[i]->getCoordY() == objects[j]->getCoordY()){
                     //objects[i].collide(objects[j]);
@@ -207,4 +205,4 @@ private:
 
     GameObject::Hero* hero;
 };
-}
+}  // namespace Game

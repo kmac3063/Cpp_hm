@@ -80,20 +80,4 @@ private:
     };
 
 };
-}
-
-//namespace A {
-//
-//}
-//
-////bool bar() {
-////    return A::foo();
-////}
-//
-//namespace A {
-//    class B {
-//        friend bool foo();
-//    };
-//
-//    bool foo() { return true; };
-//}
+}  // namespace Menu

@@ -19,7 +19,7 @@ public:
     int getCoordX() { return x; }
 
     virtual void update(GameObject*& refObj) {};
-
+    // пишем коллайд 
 protected:
     int y, x;
 };

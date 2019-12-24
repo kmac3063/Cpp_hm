@@ -1,12 +1,12 @@
 #include <iostream>
-#include <algorithm>
-#include <string>
-#include <thread>
-#include <Windows.h>#include <vector>
 #include <fstream>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <set>
 #include <map>
-
-
+#include <thread>
+#include <Windows.h>
 #include "curses.h"
 #include "panel.h"
 

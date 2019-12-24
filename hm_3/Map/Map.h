@@ -47,9 +47,13 @@ class Map {
                         factory = new Factory::FactoryMedkit();
                         break;
                     }
-
-                    objects.push_back(factory->CreateGameObject(y, x));
+                    
+                    auto obj = factory->CreateGameObject(y, x);
                     delete factory;
+
+                    objects.push_back(obj);
+                    if (ch == 'H')
+                        GameObject::hero = static_cast<GameObject::Hero*>(obj);
                 }
             }
 
@@ -75,7 +79,8 @@ class Map {
 
         for (int y_ = 0; y_ < height; y_++) {
             for (int x_ = 0; x_ < width; x_++) {
-                mvaddch(y + y_, x + x_, '.');
+                if (filledCells.find({ y_, x_ }) == filledCells.end())
+                    mvaddch(y + y_, x + x_, '.');
             }   
         }
 
@@ -83,15 +88,17 @@ class Map {
     };
 
     void drawObjects(const std::vector<GameObject::GameObject*>& objects) {
+        filledCells.clear();
+
         const int y = getYXForDrawing().first;
         const int x = getYXForDrawing().second;
-        
-        // запоминаем координаты, в которых есть монстры, карту в них не рисуем.
 
-        for (int i = 0; i < objects.size(); i++) {
+        for (size_t i = 0; i < objects.size(); i++) {
             auto o = objects[i];
             mvaddch(y + o->getCoordY(), x + o->getCoordX(), o->getSymbOnMap());
+            filledCells.emplace(o->getCoordY(), o->getCoordX());
         }
+
         refresh();
     };
 
@@ -104,6 +111,8 @@ class Map {
  private:
     int width;
     int height;
+
+    std::set<std::pair<int, int>> filledCells;
     std::vector<std::vector<char>> map;
 };
-}
+}  // namespace Map

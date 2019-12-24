@@ -3,6 +3,7 @@
 #include "GameObject.h"
 
 namespace GameObject {
+
 class Character : public GameObject {
 public:
     Character(const int& HP, const int& Dmg, const int64_t& SleepTimeMs) : 
@@ -12,7 +13,6 @@ public:
         dy = dy_;
         dx = dx_;
     }
-
     
     void setHP(int hp_) {
         hp = hp_;
@@ -39,7 +39,7 @@ public:
     }
 protected:
     virtual void move() {
-        uint64_t timeNowMs = clock();
+        int64_t timeNowMs = clock();
         if (timeNowMs < lastUseMs + sleepTimeMs) {
             return;
         }
@@ -55,7 +55,6 @@ protected:
     int hp, dmg;
     int dx = 0, dy = 0;
 };
-
 
 class Friendly : public Character {
 public:
@@ -109,41 +108,6 @@ private:
     }
 };
 
-class Dragon : public Enemy{
-public:
-    Dragon() : Enemy(HP_TABLE[getSymbOnMap()],
-        DMG_TABLE[getSymbOnMap()],
-        SLEEPTIME_TABLE[getSymbOnMap()]) {}
-
-    
-    virtual char getSymbOnMap() {
-        return 'D';
-    }
-};
-
-class Zombie : public Enemy {
-public:
-    Zombie() : Enemy(HP_TABLE[getSymbOnMap()],
-        DMG_TABLE[getSymbOnMap()],
-        SLEEPTIME_TABLE[getSymbOnMap()]) {}
-
-    virtual char getSymbOnMap() {
-        return 'Z';
-    }
-};
-
-class Trap : public Enemy {
-public:
-    Trap() : Enemy(HP_TABLE[getSymbOnMap()],
-        DMG_TABLE[getSymbOnMap()],
-        SLEEPTIME_TABLE[getSymbOnMap()]) {}
-
-    virtual char getSymbOnMap() {
-        return 'T';
-    }
-};
-
-
 class Hero : public Character {
 public:
     Hero() : Character(HP_TABLE[getSymbOnMap()], 
@@ -178,9 +142,14 @@ public:
         }
     }
 private:
-    virtual Projectile* shot() {
-        Projectile* p = new Projectile();
+    Projectile* shot() {
+        auto timeNow = clock();
+        if (timeNow < lastShotTime + HERO_RELOAD_TIME)
+            return nullptr;
 
+        lastShotTime = timeNow;
+
+        Projectile* p = new Projectile();
         p->setPos(y + lastDir.first, x + lastDir.second);
         p->dir(lastDir.first, lastDir.second);
         
@@ -195,13 +164,107 @@ private:
 
     int score = 0;
     bool doShot_ = false;
+    int lastShotTime;
     std::pair<int, int> lastDir;
 };
 
+Hero* hero;
 
+class Dragon : public Enemy{
+public:
+    Dragon() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SLEEPTIME_TABLE[getSymbOnMap()]) {}
 
+    
+    virtual char getSymbOnMap() {
+        return 'D';
+    }
 
+    virtual void update(GameObject*& refObj) {
+        auto dy = hero->getCoordY() - y;
+        if (dy != 0) dy /= abs(dy);
 
+        auto dx = hero->getCoordX() - x;
+        if (dx != 0) dx /= abs(dx);
+
+        if (dy == 0) {
+            dir(0, dx);
+            refObj = shot(0, dx);
+        }
+        else if (dx == 0) {
+            dir(dy, 0);
+            refObj = shot(dy, 0);
+        }
+        else if (rand() % 2) {
+            dir(dy, 0);
+        }
+        else {
+            dir(0, dx);
+        }
+        
+        move();
+    }
+private:
+    int64_t lastShotTime = 0;
+    Projectile* shot(const int& dy, const int& dx) {
+        auto timeNow = clock();
+        if (timeNow < lastShotTime + DRAGON_RELOAD_TIME)
+            return nullptr;
+
+        lastShotTime = timeNow;
+
+        Projectile* p = new Projectile();
+        p->setPos(y + dy, x + dx);
+        p->dir(dy, dx);
+
+        return p;
+    }
+};
+
+class Zombie : public Enemy {
+public:
+    Zombie() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SLEEPTIME_TABLE[getSymbOnMap()]) {}
+
+    virtual char getSymbOnMap() {
+        return 'Z';
+    }
+
+    virtual void update(GameObject*& refObj) {
+        auto dy = hero->getCoordY() - y;
+        if (dy != 0) dy /= abs(dy);
+        
+        auto dx = hero->getCoordX() - x;
+        if (dx != 0) dx /= abs(dx);
+
+        int rnd = rand() % 100;
+        if (rnd < 15)
+            dir(dy, dx);
+        else if (rnd < 40) 
+            dir(0, dx);
+        else if (rnd < 66) // 66% что шаг будет в мою сторону
+            dir(dy, 0);
+        else if (rnd < 84) 
+            dir(-dy, 0);
+        else
+            dir(0, -dx);
+
+        move();
+    }
+};
+
+class Trap : public Enemy {
+public:
+    Trap() : Enemy(HP_TABLE[getSymbOnMap()],
+        DMG_TABLE[getSymbOnMap()],
+        SLEEPTIME_TABLE[getSymbOnMap()]) {}
+
+    virtual char getSymbOnMap() {
+        return 'T';
+    }
+};
 
 
 }  // namespace GameObject

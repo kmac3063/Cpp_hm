@@ -68,4 +68,4 @@ public:
         return obj;
     }
 };
-}
+}  // namespace Factory
