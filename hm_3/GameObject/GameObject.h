@@ -7,6 +7,14 @@ std::map<char, int> HP_TABLE;
 std::map<char, int> DMG_TABLE;
 std::map<char, int64_t> SLEEPTIME_TABLE;
 
+class Hero;
+class Zombie;
+class Dragon;
+class Princess;
+class Trap;
+class Wall;
+class Medkit;
+
 class GameObject {
 public:
     virtual char getSymbOnMap() = 0;
@@ -19,7 +27,8 @@ public:
     int getCoordX() { return x; }
 
     virtual void update(GameObject*& refObj) {};
-    // пишем коллайд 
+    
+    virtual void collide(GameObject* obj) {};
 protected:
     int y, x;
 };

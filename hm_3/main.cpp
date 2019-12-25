@@ -23,6 +23,16 @@
 #include "Map/Map.h"
 #include "Game.h"
 
+//void GameObject::Zombie::collide(Wall* wall) {
+//    doCollide(wall);
+//}
+//
+//void GameObject::Zombie::doCollide(Wall* wall) {
+//    
+//}
+
+
+
 void init_() {
     initscr();
     noecho();
