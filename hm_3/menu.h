@@ -1,66 +1,18 @@
 #pragma once
-#include "Visual.h"
+
+#include "constants.h"
 
 namespace Menu {
 class Menu {
 public:
-    Menu() {
-        int height, width;
-        getmaxyx(stdscr, height, width);
-        y = (height - MENU_HEIGHT) / 2;
-        x = (width - MENU_WIDTH) / 2;
-    }
+    Menu();
 
-    void select() {
-        Visual::drawBorder(y - 1, y + MENU_HEIGHT, x - 1, x + MENU_WIDTH);
-        bool exit = false;
+    void select();
 
-        while (!exit) {
-            drawMenu();
-            if (Options::RainOn)
-                Visual::drawRain(y - 1, y + MENU_HEIGHT, x - 1, x + MENU_WIDTH);
-
-            switch (getch())
-            {
-            case 'w':
-            case 'W':
-            case KEY_UP:
-                if (--selected_id < 0 )
-                    selected_id += MENU_HEIGHT;
-                break;
-
-            case 's':
-            case 'S':
-            case KEY_DOWN:
-                if (++selected_id == MENU_HEIGHT)
-                    selected_id = 0;
-                break;
-            case KEY_ESCAPE_:
-                selected_id = 4;
-            case KEY_ENTER_: 
-                exit = true;
-                break;
-            }
-        }
-    }
-
-    int getSelected() {
-        return itemCode[selected_id];
-    }
+    int getSelected();
 
 private:
-    void drawMenu() {
-        for (int i = 0; i < MENU_HEIGHT; i++)
-        {
-            if (i == selected_id) 
-                mvaddch(y + i, x, '>'); 
-            else
-                mvaddch(y + i, x, ' '); 
-
-            mvprintw(y + i, x + 1, "%s", items[i]);
-        }
-        refresh();
-    }
+    void drawMenu();
     
     int x, y;
     int selected_id = 0;
@@ -78,6 +30,5 @@ private:
         MENU_OPTIONS,
         MENU_EXIT
     };
-
 };
 }  // namespace Menu

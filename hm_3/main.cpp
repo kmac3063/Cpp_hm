@@ -1,37 +1,19 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <algorithm>
-#include <vector>
-#include <set>
-#include <map>
-#include <thread>
-#include <Windows.h>
+#pragma once 
+
 #include "curses.h"
 #include "panel.h"
 
-#include "Options.h"
-#include "constants.h"
-#include "menu.h"
-#include "Visual.h"
-#include "OptionsInterface.h"
-
-#include "GameObject/GameObject.h"
-#include "GameObject/Character.h"
-#include "GameObject/Subject.h"
-#include "Factory.h"
 #include "Map/Map.h"
+#include "OptionsInterface.h"
+#include "Visual.h"
+#include "GameObject/Subject.h"
+#include "GameObject/Character.h"
+#include "constants.h"
 #include "Game.h"
-
-//void GameObject::Zombie::collide(Wall* wall) {
-//    doCollide(wall);
-//}
-//
-//void GameObject::Zombie::doCollide(Wall* wall) {
-//    
-//}
-
-
+#include "menu.h"
+#include "GameObject/GameObject.h"
+#include "Options.h"
+#include "Factory.h"
 
 void init_() {
     initscr();

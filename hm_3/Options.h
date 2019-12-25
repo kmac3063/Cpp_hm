@@ -1,8 +1,7 @@
 #pragma once
 
 namespace Options {
-
-int Dif;
-bool TimerOn;
-bool RainOn;
+    extern int Dif;
+    extern bool TimerOn;
+    extern bool RainOn;
 }  // namespace Options
