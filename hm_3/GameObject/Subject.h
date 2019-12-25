@@ -12,19 +12,20 @@ protected:
 };
 
 class Wall : public Subject {
+public:
     virtual void update(GameObject*& refObj);
     
     virtual char getSymbOnMap();
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -37,19 +38,23 @@ class Wall : public Subject {
 };
 
 class Medkit : public Subject {
+public:
+    Medkit();
     virtual void update(GameObject*& refObj);
 
     virtual char getSymbOnMap();
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    int getHP();
+
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -59,5 +64,7 @@ class Medkit : public Subject {
     void doCollide(Trap*);
     void doCollide(Wall*);
     void doCollide(Medkit*);
+private:
+    int healPoint;
 };
 }  // namespace GameObject

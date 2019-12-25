@@ -9,6 +9,8 @@ public:
 
     void loadSaveFile();
 
+    void startNewGame();
+
     void startGame();
 
 private:
@@ -20,11 +22,13 @@ private:
 
     void readConfig();
 
-    void readMap();
-
     void updateObjects();
 
-    void collideObjects();
+    virtual void collideObjects();
+
+    void nextLevel();
+
+    void saveProgress(const int& level);
 
     time_t startTime;
 
@@ -32,5 +36,7 @@ private:
     Map::Map* map;
 
     GameObject::Hero* hero;
+
+    int level = 0;
 };
 }  // namespace Game

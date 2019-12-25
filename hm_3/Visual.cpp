@@ -1,10 +1,12 @@
 #pragma once
 #include <thread>
+#include <Windows.h>
 
 #include "curses.h"
 #include "panel.h"
 
 #include "Visual.h"
+#include "Options.h"
 
 
 void Visual::drawBorder(const int& y1, const int& y2,
@@ -41,15 +43,18 @@ void Visual::drawRain(const int& y1, const int& y2,
         mvaddch(rY, rX, '|' | A_UNDERLINE);
         xy[i] = { rX, rY };
     }
+
     refresh();
 
     if (clock() % 20) // Ёффект прибывающего дожд€
         for (auto p : xy)
             mvaddch(p.y, p.x, ' ');
+    
 }
 
-void Visual::showMessage(std::string message) {
+void Visual::showMessage(const std::string& message, const int& delayMs) {
     clear();
+
     int windowHeight, windowWidth;
     getmaxyx(stdscr, windowHeight, windowWidth);
 
@@ -60,16 +65,18 @@ void Visual::showMessage(std::string message) {
 
     drawBorder(y1, y2, x1, x2);
     mvaddstr(y1 + 1, x1 + 1, message.c_str());
+    refresh();
 
-    while (getch() == ERR) {
-        drawRain(y1, y2, x1, x2);
+    auto timeNow = clock();
+    while (clock() < timeNow + delayMs || getch() == ERR) {
+        if (Options::RainOn)
+            drawRain(y1, y2, x1, x2);
     }
 
-    refresh();
     clear();
 }
 
-void Visual::drawTimer(const int& y, const int& x, const time_t& seconds) {
+void Visual::drawTimer(const int& y, const int& x, const int& seconds) {
     const int minut = seconds / 60;
     const int sec = seconds - minut * 60;
 

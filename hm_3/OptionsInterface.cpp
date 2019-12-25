@@ -19,7 +19,7 @@ Options::Options::Options() {
 void Options::Options::setDefault() {
     Dif = OPTIONS_EASY;
     TimerOn = true;
-    RainOn = false;
+    RainOn = true;
 }
 
 void Options::Options::open() {

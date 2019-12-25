@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <fstream>
+#include <string>
 
 #include "../constants.h"
 #include "../curses.h"
@@ -11,14 +12,17 @@
 
 #include "Map.h"
 
-void Map::Map::readMapFromFile(std::vector<GameObject::GameObject*>& objects) {
-    std::ifstream file(MAP_FILE_NAME);
+void Map::Map::readMapFromFile(const int& levelId, 
+        std::vector<GameObject::GameObject*>& objects) {
+
+    const std::string& fileName = "Map/level" + std::to_string(levelId) + ".map";
+    std::ifstream file(fileName);
 
     try {
         if (!file)
             throw;
 
-        file >> height >> width;
+        file >> height >> width >> levelRequiredScore;
         map.resize(height, std::vector<char>(width));
 
         Factory::Factory* factory = nullptr;
@@ -100,6 +104,8 @@ void Map::Map::drawObjects(const std::vector<GameObject::GameObject*>& objects) 
 
     for (size_t i = 0; i < objects.size(); i++) {
         auto o = objects[i];
+        if (!o->isAlive())
+            continue;
         mvaddch(y + o->getCoordY(), x + o->getCoordX(), o->getSymbOnMap());
         filledCells.emplace(o->getCoordY(), o->getCoordX());
     }
@@ -112,4 +118,8 @@ std::pair<int, int> Map::Map::getYXForDrawing() {
     getmaxyx(stdscr, maxY, maxX);
 
     return std::make_pair((maxY - height) / 2, (maxX - width) / 2);
+}
+
+int Map::Map::getLevelRequiredScore() {
+    return levelRequiredScore;
 }

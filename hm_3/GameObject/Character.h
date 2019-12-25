@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GameObject.h"
+#include "../constants.h"
 
 namespace GameObject {
 class Character : public GameObject {
@@ -12,6 +13,7 @@ public:
     int getHP();
 
     void damage(const int& damage);
+    int getDamagePower();
     void heal(const int& heal);
     virtual bool isAlive();
 
@@ -22,8 +24,9 @@ public:
 protected:
     virtual void move();
 
-    const int64_t sleepTimeMs;
-    int64_t lastUseMs = -sleepTimeMs;
+    int64_t sleepTimeMs;
+    int64_t lastUseMs = 0;
+    int64_t lastDmgMs = 0;
     std::pair<int, int> lastDir = { 0, 0 };
 
     int hp, dmg;
@@ -42,15 +45,15 @@ public:
 
     virtual char getSymbOnMap();
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -77,15 +80,15 @@ public:
 
     virtual char getSymbOnMap();
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -108,15 +111,17 @@ public:
 
     virtual void update(GameObject*& refObj);
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    void damage(const int& damage);
+
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -140,15 +145,17 @@ public:
 
     virtual void update(GameObject*& refObj);
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    void damage(const int& damage);
+
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -164,15 +171,15 @@ class Trap : public Enemy {
 public:
     Trap();
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
     
     void doCollide(Hero*);
     void doCollide(Zombie*);
@@ -203,15 +210,15 @@ public:
 
     virtual void update(GameObject*& refObj);
 
-    void collide(GameObject*);
-    void collide(Hero*);
-    void collide(Zombie*);
-    void collide(Princess*);
-    void collide(Projectile*);
-    void collide(Dragon*);
-    void collide(Trap*);
-    void collide(Wall*);
-    void collide(Medkit*);
+    virtual void collide(GameObject*);
+    virtual void collide(Hero*);
+    virtual void collide(Zombie*);
+    virtual void collide(Princess*);
+    virtual void collide(Projectile*);
+    virtual void collide(Dragon*);
+    virtual void collide(Trap*);
+    virtual void collide(Wall*);
+    virtual void collide(Medkit*);
 
     void doCollide(Hero*);
     void doCollide(Zombie*);

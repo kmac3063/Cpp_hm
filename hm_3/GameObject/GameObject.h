@@ -29,26 +29,15 @@ public:
     virtual void update(GameObject*& refObj) = 0;
 
     virtual void collide(GameObject*) = 0;
+    virtual void collide(Hero*) = 0;
+    virtual void collide(Zombie*) = 0;
+    virtual void collide(Princess*) = 0;
+    virtual void collide(Projectile*) = 0;
+    virtual void collide(Dragon*) = 0;
+    virtual void collide(Trap*) = 0;
+    virtual void collide(Wall*) = 0;
+    virtual void collide(Medkit*) = 0;
 protected:
-    int y, x;
+    int y = 0, x = 0;
 };
 }  // namespace GameObject
-
-//void collide(GameObject* obj);
-//void collide(Hero* h);
-//void collide(Zombie* z);
-//void collide(Princess* p);
-//void collide(Projectile* p);
-//void collide(Dragon* d);
-//void collide(Trap* t);
-//void collide(Wall* w);
-//void collide(Medkit* m);
-//
-//void doCollide(Hero* h);
-//void doCollide(Zombie* z);
-//void doCollide(Princess* p);
-//void doCollide(Projectile* p);
-//void doCollide(Dragon* d);
-//void doCollide(Trap* t);
-//void doCollide(Wall* w);
-//void doCollide(Medkit* m);

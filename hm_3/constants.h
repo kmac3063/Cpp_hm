@@ -25,7 +25,8 @@
 // game //
 #define CONFIG_FILE_NAME "Config/Config.cfg"
 #define SAVE_FILE_NAME "Save/Save.save"
-#define MAP_FILE_NAME "Map/Map.map"
 #define HERO_RELOAD_TIME 700
 #define DRAGON_RELOAD_TIME 3000
+#define DAMAGE_DELAY_TIME 500
+#define MAX_LEVEL 9
 // game //

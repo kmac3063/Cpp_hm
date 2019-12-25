@@ -42,7 +42,7 @@ int main() {
             game = new Game::Game();
             
             try {
-                game->startGame();
+                game->startNewGame();
             }
             catch (std::exception e) {
                 Visual::showMessage(e.what());

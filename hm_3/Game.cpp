@@ -21,9 +21,22 @@ Game::Game::~Game() {
 }
 
 void Game::Game::loadSaveFile() {
-    std::ifstream file(SAVE_FILE_NAME);
-    if (!file)
+    try {
+        std::ifstream file(SAVE_FILE_NAME);
+        file >> level;
+    }
+    catch (std::exception e) {
         throw std::exception("The save file's, like, corrupted or something.");
+    }
+}
+
+void Game::Game::startNewGame() {
+    level = 0;
+    objects.clear();
+    Map::Map* map = nullptr;
+    GameObject::Hero* hero = nullptr;
+
+    startGame();
 }
 
 void Game::Game::startGame() {
@@ -41,6 +54,7 @@ void Game::Game::startGame() {
 
     startTime = time(NULL);
 
+    bool keyEscapePressed = false;
     bool gameOn = true;
     while (gameOn && hero->isAlive()) {
         drawAll();
@@ -76,18 +90,27 @@ void Game::Game::startGame() {
                 break;
 
         case KEY_ESCAPE_:
-            //save in file
+            keyEscapePressed = true;
             gameOn = false;
+
+            saveProgress(level);
             break;
         }
 
         updateObjects();
 
         collideObjects();
-    }
 
+        if (hero->getScore() == map->getLevelRequiredScore()) { 
+            gameOn = false;
+        }
+    }
     if (!hero->isAlive()) {
         hero->showDieMessage();
+        saveProgress(0);
+    }
+    else if (!keyEscapePressed) {
+        nextLevel();
     }
 
     clear();
@@ -119,16 +142,18 @@ void Game::Game::drawAll() {
 void Game::Game::drawInterface(const int& y, const int& x) {
     auto hpStr = std::to_string(hero->getHP());
     auto scoreStr = std::to_string(hero->getScore());
+
+    const auto clearStr = "                         ";
+    mvaddstr(y, x, clearStr);
     mvaddstr(y, x, ("HP : " + hpStr + " SCORE : " + scoreStr).c_str());
     refresh();
 }
-
 
 void Game::Game::init() {
     map = new Map::Map();
     try {
         readConfig();
-        readMap();
+        map->readMapFromFile(level, objects);
     }
     catch (std::exception e) {
         throw;
@@ -171,19 +196,13 @@ void Game::Game::readConfig() {
 
 }
 
-void Game::Game::readMap() {
-    try {
-        map->readMapFromFile(objects);
-    }
-    catch (std::exception e) {
-        throw;
-    }
-}
-
 void Game::Game::updateObjects() {
     GameObject::GameObject* newObj = nullptr;
     std::vector<GameObject::GameObject*> newObjects;
     for (auto o : objects) {
+        if (!o->isAlive())
+            continue;
+
         o->update(newObj);
 
         if (newObj != nullptr) {
@@ -200,10 +219,33 @@ void Game::Game::updateObjects() {
 void Game::Game::collideObjects() {
     for (size_t i = 0; i < objects.size() - 1; i++) {
         for (size_t j = i + 1; j < objects.size(); j++) {
+            if (!objects[i]->isAlive() || !objects[j]->isAlive())
+                continue;
+
             if (objects[i]->getCoordX() == objects[j]->getCoordX()
                 && objects[i]->getCoordY() == objects[j]->getCoordY()) {
-                //objects[i].collide(objects[j]);
+                objects[i]->collide(objects[j]);
             }
         }
     }
+}
+
+void Game::Game::nextLevel() {
+    level = (level + 1 ) % (MAX_LEVEL + 1);
+
+    auto lvlStr = std::to_string(level);
+    Visual::showMessage("Excellent! You go to " + lvlStr + " level!", 2000);
+
+    clear();
+
+    objects.clear();
+    delete map;
+    delete hero;
+
+    startGame();
+}
+
+void Game::Game::saveProgress(const int& level) {
+    std::ofstream fout(SAVE_FILE_NAME);
+    fout << level;
 }

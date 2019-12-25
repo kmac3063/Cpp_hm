@@ -8,7 +8,7 @@
 namespace Map {
 class Map {
  public:
-    void readMapFromFile(std::vector<GameObject::GameObject*>& objects);
+    void readMapFromFile(const int& levelId, std::vector<GameObject::GameObject*>& objects);
     
     int getWidth();
 
@@ -20,9 +20,12 @@ class Map {
 
     std::pair<int, int> getYXForDrawing();
 
+    int getLevelRequiredScore();
+
  private:
-    int width;
-    int height;
+    int width = 0;
+    int height = 0;
+    int levelRequiredScore = 0;
 
     std::set<std::pair<int, int>> filledCells;
     std::vector<std::vector<char>> map;
