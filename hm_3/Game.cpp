@@ -15,11 +15,6 @@
 #include "Game.h"
 #include "Map/Map.h"
 
-Game::Game::~Game() {
-    if (map != nullptr)
-        delete map;
-}
-
 void Game::Game::loadSaveFile() {
     try {
         std::ifstream file(SAVE_FILE_NAME);
@@ -33,8 +28,8 @@ void Game::Game::loadSaveFile() {
 void Game::Game::startNewGame() {
     level = 0;
     objects.clear();
-    Map::Map* map = nullptr;
-    GameObject::Hero* hero = nullptr;
+    map = nullptr;
+    std::shared_ptr<GameObject::Hero> hero = nullptr;
 
     startGame();
 }
@@ -45,8 +40,6 @@ void Game::Game::startGame() {
         init();
     }
     catch (std::exception e) {
-        if (map != nullptr)
-            delete map;
         throw;
     }
 
@@ -105,6 +98,7 @@ void Game::Game::startGame() {
             gameOn = false;
         }
     }
+
     if (!hero->isAlive()) {
         hero->showDieMessage();
         saveProgress(0);
@@ -150,7 +144,7 @@ void Game::Game::drawInterface(const int& y, const int& x) {
 }
 
 void Game::Game::init() {
-    map = new Map::Map();
+    map = std::shared_ptr<Map::Map>(new Map::Map());
     try {
         readConfig();
         map->readMapFromFile(level, objects);
@@ -197,8 +191,8 @@ void Game::Game::readConfig() {
 }
 
 void Game::Game::updateObjects() {
-    GameObject::GameObject* newObj = nullptr;
-    std::vector<GameObject::GameObject*> newObjects;
+    std::shared_ptr<GameObject::GameObject> newObj;
+    std::vector<std::shared_ptr<GameObject::GameObject>> newObjects;
     for (auto o : objects) {
         if (!o->isAlive())
             continue;
@@ -216,14 +210,20 @@ void Game::Game::updateObjects() {
         objects.push_back(newObjects[i]);
 }
 
-void Game::Game::collideObjects() {
+void Game::Game::collideObjects() { // 87 130
     for (size_t i = 0; i < objects.size() - 1; i++) {
         for (size_t j = i + 1; j < objects.size(); j++) {
+
+            if (i == 84 && j == 86) {
+                int a = 2;
+            } // 84 86
+
             if (!objects[i]->isAlive() || !objects[j]->isAlive())
                 continue;
 
             if (objects[i]->getCoordX() == objects[j]->getCoordX()
                 && objects[i]->getCoordY() == objects[j]->getCoordY()) {
+
                 objects[i]->collide(objects[j]);
             }
         }
@@ -232,15 +232,11 @@ void Game::Game::collideObjects() {
 
 void Game::Game::nextLevel() {
     level = (level + 1 ) % (MAX_LEVEL + 1);
-
     auto lvlStr = std::to_string(level);
     Visual::showMessage("Excellent! You go to " + lvlStr + " level!", 2000);
 
     clear();
-
     objects.clear();
-    delete map;
-    delete hero;
 
     startGame();
 }

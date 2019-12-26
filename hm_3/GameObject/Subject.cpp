@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "Subject.h"
 #include "Character.h"
 
@@ -12,52 +14,52 @@ char GameObject::Wall::getSymbOnMap() {
     return '#';
 }
 
-void GameObject::Wall::update(GameObject*& g) {}
+void GameObject::Wall::update(std::shared_ptr<GameObject>& g) {}
 
-void GameObject::Wall::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Wall::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Hero* h) {
+void GameObject::Wall::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Zombie* z) {
+void GameObject::Wall::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Princess* p) {
+void GameObject::Wall::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Projectile* p) {
+void GameObject::Wall::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Dragon* d) {
+void GameObject::Wall::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Trap* t) {
+void GameObject::Wall::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Wall* w) {
+void GameObject::Wall::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Wall>(this));
 }
-void GameObject::Wall::collide(Medkit* m) {
+void GameObject::Wall::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Wall>(this));
 }
 
-void GameObject::Wall::doCollide(Hero* h) {}
-void GameObject::Wall::doCollide(Zombie* z) {}
-void GameObject::Wall::doCollide(Princess* p) {}
-void GameObject::Wall::doCollide(Projectile* p) {}
-void GameObject::Wall::doCollide(Dragon* d) {}
-void GameObject::Wall::doCollide(Trap* t) {}
-void GameObject::Wall::doCollide(Wall* w) {}
-void GameObject::Wall::doCollide(Medkit* m) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Hero> h) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Zombie> z) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Princess> p) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Projectile> p) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Dragon> d) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Trap> t) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Wall> w) {}
+void GameObject::Wall::doCollide(std::shared_ptr<Medkit> m) {}
 
 
 GameObject::Medkit::Medkit() : healPoint(HP_TABLE[getSymbOnMap()]) {}
@@ -66,59 +68,59 @@ char GameObject::Medkit::getSymbOnMap() {
     return '+';
 }
 
-void GameObject::Medkit::update(GameObject*& g) {}
+void GameObject::Medkit::update(std::shared_ptr<GameObject>& g) {}
 
 int GameObject::Medkit::getHP() { return healPoint; }
 
-void GameObject::Medkit::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Medkit::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Hero* h) {
+void GameObject::Medkit::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Zombie* z) {
+void GameObject::Medkit::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Princess* p) {
+void GameObject::Medkit::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Projectile* p) {
+void GameObject::Medkit::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Dragon* d) {
+void GameObject::Medkit::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Trap* t) {
+void GameObject::Medkit::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Wall* w) {
+void GameObject::Medkit::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Medkit>(this));
 }
-void GameObject::Medkit::collide(Medkit* m) {
+void GameObject::Medkit::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Medkit>(this));
 }
 
-void GameObject::Medkit::doCollide(Hero* h) {
+void GameObject::Medkit::doCollide(std::shared_ptr<Hero> h) {
     h->heal(healPoint);
     exist = false;
 }
-void GameObject::Medkit::doCollide(Zombie* z) {}
-void GameObject::Medkit::doCollide(Princess* p) {
+void GameObject::Medkit::doCollide(std::shared_ptr<Zombie> z) {}
+void GameObject::Medkit::doCollide(std::shared_ptr<Princess> p) {
     p->heal(healPoint);
     exist = false;
 }
-void GameObject::Medkit::doCollide(Projectile* p) {
+void GameObject::Medkit::doCollide(std::shared_ptr<Projectile> p) {
     exist = false;
 }
-void GameObject::Medkit::doCollide(Dragon* d) {}
-void GameObject::Medkit::doCollide(Trap* t) {}
-void GameObject::Medkit::doCollide(Wall* w) {}
-void GameObject::Medkit::doCollide(Medkit* m) {}
+void GameObject::Medkit::doCollide(std::shared_ptr<Dragon> d) {}
+void GameObject::Medkit::doCollide(std::shared_ptr<Trap> t) {}
+void GameObject::Medkit::doCollide(std::shared_ptr<Wall> w) {}
+void GameObject::Medkit::doCollide(std::shared_ptr<Medkit> m) {}

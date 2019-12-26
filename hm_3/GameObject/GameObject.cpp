@@ -1,8 +1,11 @@
 #pragma once
+
+#include <memory>
 #include <map>
+
 #include "GameObject.h"
 
-GameObject::Hero* GameObject::hero;
+std::shared_ptr<GameObject::Hero> GameObject::hero;
 std::map<char, int> GameObject::HP_TABLE;
 std::map<char, int> GameObject::DMG_TABLE;
 std::map<char, int64_t> GameObject::SLEEPTIME_TABLE;

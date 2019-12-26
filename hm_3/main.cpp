@@ -32,14 +32,14 @@ int main() {
     Menu::Menu menu;
     Options::Options options;
     options.setDefault();
-    Game::Game* game = nullptr;
-
+    std::shared_ptr<Game::Game> game;
+    
     menu.select();
     while (menu.getSelected() != MENU_EXIT) {
         switch (menu.getSelected())
         {
         case MENU_NEWGAME:
-            game = new Game::Game();
+            game = std::shared_ptr<Game::Game>(new Game::Game());
             
             try {
                 game->startNewGame();
@@ -50,7 +50,7 @@ int main() {
             break;
         
         case MENU_CONTINUE:
-            game = new Game::Game();
+            game = std::shared_ptr<Game::Game>(new Game::Game());
             
             try {
                 game->loadSaveFile();
@@ -72,9 +72,6 @@ int main() {
         }
         menu.select();
     }
-
-    if (game != nullptr)
-        delete game;
 
     clear();
     refresh();

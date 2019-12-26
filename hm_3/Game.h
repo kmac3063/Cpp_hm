@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
+
 #include "Map/Map.h"
 
 namespace Game {
 class Game {
 public:
-    ~Game();
-
     void loadSaveFile();
 
     void startNewGame();
@@ -32,10 +32,10 @@ private:
 
     time_t startTime;
 
-    std::vector<GameObject::GameObject*> objects;
-    Map::Map* map;
+    std::vector<std::shared_ptr<GameObject::GameObject>> objects;
+    std::shared_ptr<Map::Map> map;
 
-    GameObject::Hero* hero;
+    std::shared_ptr<GameObject::Hero> hero;
 
     int level = 0;
 };

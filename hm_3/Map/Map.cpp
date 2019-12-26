@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <fstream>
 #include <string>
@@ -13,19 +14,19 @@
 #include "Map.h"
 
 void Map::Map::readMapFromFile(const int& levelId, 
-        std::vector<GameObject::GameObject*>& objects) {
-
+        std::vector<std::shared_ptr<GameObject::GameObject>>& objects) {
+    
     const std::string& fileName = "Map/level" + std::to_string(levelId) + ".map";
-    std::ifstream file(fileName);
 
     try {
+        std::ifstream file(fileName);
         if (!file)
             throw;
 
         file >> height >> width >> levelRequiredScore;
         map.resize(height, std::vector<char>(width));
 
-        Factory::Factory* factory = nullptr;
+        std::shared_ptr<Factory::Factory> factory;
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -36,35 +37,37 @@ void Map::Map::readMapFromFile(const int& levelId,
                     continue;
 
                 switch (ch) {
-                case 'H':
-                    factory = new Factory::FactoryHero();
+                case 'H': {
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryHero());
                     break;
+                }
                 case 'P':
-                    factory = new Factory::FactoryPrincess();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryPrincess());
                     break;
                 case 'Z':
-                    factory = new Factory::FactoryZombie();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryZombie());
                     break;
                 case 'D':
-                    factory = new Factory::FactoryDragon();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryDragon());
                     break;
                 case 'T':
-                    factory = new Factory::FactoryTrap();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryTrap());
                     break;
                 case '#':
-                    factory = new Factory::FactoryWall();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryWall());
                     break;
                 case '+':
-                    factory = new Factory::FactoryMedkit();
+                    factory = std::shared_ptr<Factory::Factory>(new Factory::FactoryMedkit());
                     break;
                 }
 
                 auto obj = factory->CreateGameObject(y, x);
-                delete factory;
-
+                
                 objects.push_back(obj);
-                if (ch == 'H')
-                    GameObject::hero = static_cast<GameObject::Hero*>(obj);
+                if (ch == 'H') {
+                    GameObject::hero = 
+                        std::shared_ptr<GameObject::Hero>(static_cast<GameObject::Hero*>(obj.get()));
+                }
             }
         }
 
@@ -96,7 +99,7 @@ void Map::Map::drawMap() {
     refresh();
 };
 
-void Map::Map::drawObjects(const std::vector<GameObject::GameObject*>& objects) {
+void Map::Map::drawObjects(const std::vector<std::shared_ptr<GameObject::GameObject>>& objects) {
     filledCells.clear();
 
     const int y = getYXForDrawing().first;

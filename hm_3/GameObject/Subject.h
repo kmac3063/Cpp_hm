@@ -13,57 +13,57 @@ protected:
 
 class Wall : public Subject {
 public:
-    virtual void update(GameObject*& refObj);
+    virtual void update(std::shared_ptr<GameObject>& refObj);
     
     virtual char getSymbOnMap();
 
-    virtual void collide(GameObject*);
-    virtual void collide(Hero*);
-    virtual void collide(Zombie*);
-    virtual void collide(Princess*);
-    virtual void collide(Projectile*);
-    virtual void collide(Dragon*);
-    virtual void collide(Trap*);
-    virtual void collide(Wall*);
-    virtual void collide(Medkit*);
+    virtual void collide(std::shared_ptr<GameObject>);
+    virtual void collide(std::shared_ptr<Hero>);
+    virtual void collide(std::shared_ptr<Zombie>);
+    virtual void collide(std::shared_ptr<Princess>);
+    virtual void collide(std::shared_ptr<Projectile>);
+    virtual void collide(std::shared_ptr<Dragon>);
+    virtual void collide(std::shared_ptr<Trap>);
+    virtual void collide(std::shared_ptr<Wall>);
+    virtual void collide(std::shared_ptr<Medkit>);
 
-    void doCollide(Hero*);
-    void doCollide(Zombie*);
-    void doCollide(Princess*);
-    void doCollide(Projectile*);
-    void doCollide(Dragon*);
-    void doCollide(Trap*);
-    void doCollide(Wall*);
-    void doCollide(Medkit*);
+    void doCollide(std::shared_ptr<Hero>);
+    void doCollide(std::shared_ptr<Zombie>);
+    void doCollide(std::shared_ptr<Princess>);
+    void doCollide(std::shared_ptr<Projectile>);
+    void doCollide(std::shared_ptr<Dragon>);
+    void doCollide(std::shared_ptr<Trap>);
+    void doCollide(std::shared_ptr<Wall>);
+    void doCollide(std::shared_ptr<Medkit>);
 };
 
 class Medkit : public Subject {
 public:
     Medkit();
-    virtual void update(GameObject*& refObj);
+    virtual void update(std::shared_ptr<GameObject>& refObj);
 
     virtual char getSymbOnMap();
 
     int getHP();
 
-    virtual void collide(GameObject*);
-    virtual void collide(Hero*);
-    virtual void collide(Zombie*);
-    virtual void collide(Princess*);
-    virtual void collide(Projectile*);
-    virtual void collide(Dragon*);
-    virtual void collide(Trap*);
-    virtual void collide(Wall*);
-    virtual void collide(Medkit*);
+    virtual void collide(std::shared_ptr<GameObject>);
+    virtual void collide(std::shared_ptr<Hero>);
+    virtual void collide(std::shared_ptr<Zombie>);
+    virtual void collide(std::shared_ptr<Princess>);
+    virtual void collide(std::shared_ptr<Projectile>);
+    virtual void collide(std::shared_ptr<Dragon>);
+    virtual void collide(std::shared_ptr<Trap>);
+    virtual void collide(std::shared_ptr<Wall>);
+    virtual void collide(std::shared_ptr<Medkit>);
 
-    void doCollide(Hero*);
-    void doCollide(Zombie*);
-    void doCollide(Princess*);
-    void doCollide(Projectile*);
-    void doCollide(Dragon*);
-    void doCollide(Trap*);
-    void doCollide(Wall*);
-    void doCollide(Medkit*);
+    void doCollide(std::shared_ptr<Hero>);
+    void doCollide(std::shared_ptr<Zombie>);
+    void doCollide(std::shared_ptr<Princess>);
+    void doCollide(std::shared_ptr<Projectile>);
+    void doCollide(std::shared_ptr<Dragon>);
+    void doCollide(std::shared_ptr<Trap>);
+    void doCollide(std::shared_ptr<Wall>);
+    void doCollide(std::shared_ptr<Medkit>);
 private:
     int healPoint;
 };

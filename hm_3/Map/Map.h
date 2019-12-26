@@ -8,7 +8,7 @@
 namespace Map {
 class Map {
  public:
-    void readMapFromFile(const int& levelId, std::vector<GameObject::GameObject*>& objects);
+    void readMapFromFile(const int& levelId, std::vector<std::shared_ptr<GameObject::GameObject>>& objects);
     
     int getWidth();
 
@@ -16,7 +16,7 @@ class Map {
 
     void drawMap();
 
-    void drawObjects(const std::vector<GameObject::GameObject*>& objects);
+    void drawObjects(const std::vector<std::shared_ptr<GameObject::GameObject>>&);
 
     std::pair<int, int> getYXForDrawing();
 

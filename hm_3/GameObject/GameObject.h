@@ -1,4 +1,6 @@
 #pragma once
+
+#include <memory>
 #include <map>
 
 namespace GameObject {
@@ -11,7 +13,7 @@ class Trap;
 class Wall;
 class Medkit;
 
-extern Hero* hero;
+extern std::shared_ptr<Hero> hero;
 extern std::map<char, int> HP_TABLE;
 extern std::map<char, int> DMG_TABLE;
 extern std::map<char, int64_t> SLEEPTIME_TABLE;
@@ -26,17 +28,17 @@ public:
 
     virtual bool isAlive() = 0;
 
-    virtual void update(GameObject*& refObj) = 0;
+    virtual void update(std::shared_ptr<GameObject>& refObj) = 0;
 
-    virtual void collide(GameObject*) = 0;
-    virtual void collide(Hero*) = 0;
-    virtual void collide(Zombie*) = 0;
-    virtual void collide(Princess*) = 0;
-    virtual void collide(Projectile*) = 0;
-    virtual void collide(Dragon*) = 0;
-    virtual void collide(Trap*) = 0;
-    virtual void collide(Wall*) = 0;
-    virtual void collide(Medkit*) = 0;
+    virtual void collide(std::shared_ptr<GameObject>) = 0;
+    virtual void collide(std::shared_ptr<Hero>) = 0;
+    virtual void collide(std::shared_ptr<Zombie>) = 0;
+    virtual void collide(std::shared_ptr<Princess>) = 0;
+    virtual void collide(std::shared_ptr<Projectile>) = 0;
+    virtual void collide(std::shared_ptr<Dragon>) = 0;
+    virtual void collide(std::shared_ptr<Trap>) = 0;
+    virtual void collide(std::shared_ptr<Wall>) = 0;
+    virtual void collide(std::shared_ptr<Medkit>) = 0;
 protected:
     int y = 0, x = 0;
 };

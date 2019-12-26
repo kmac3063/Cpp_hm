@@ -53,7 +53,7 @@ void GameObject::Character::heal(const int& heal) {
     hp = std::min(HP_TABLE['H'], hp + heal);
 }
 
-void GameObject::Character::update(GameObject*& refObj) {
+void GameObject::Character::update(std::shared_ptr<GameObject>& refObj) {
     move();
 }
 
@@ -86,63 +86,63 @@ char GameObject::Princess::getSymbOnMap() {
     return 'P';
 }
 
-void GameObject::Princess::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Princess::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Hero* h) {
+void GameObject::Princess::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Zombie* z) {
+void GameObject::Princess::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Princess* p) {
+void GameObject::Princess::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Projectile* p) {
+void GameObject::Princess::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Dragon* d) {
+void GameObject::Princess::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Trap* t) {
+void GameObject::Princess::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Wall* w) {
+void GameObject::Princess::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Princess>(this));
 }
-void GameObject::Princess::collide(Medkit* m) {
+void GameObject::Princess::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Princess>(this));
 }
 
-void GameObject::Princess::doCollide(Hero* h) {
+void GameObject::Princess::doCollide(std::shared_ptr<Hero> h) {
     setHP(0);
 }
-void GameObject::Princess::doCollide(Zombie* z) {
+void GameObject::Princess::doCollide(std::shared_ptr<Zombie> z) {
     damage(z->getDamagePower());
 }
-void GameObject::Princess::doCollide(Princess* p) {}
-void GameObject::Princess::doCollide(Projectile* p) {
+void GameObject::Princess::doCollide(std::shared_ptr<Princess> p) {}
+void GameObject::Princess::doCollide(std::shared_ptr<Projectile> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Princess::doCollide(Dragon* d) {
+void GameObject::Princess::doCollide(std::shared_ptr<Dragon> d) {
     damage(d->getDamagePower());
 }
-void GameObject::Princess::doCollide(Trap* t) {
+void GameObject::Princess::doCollide(std::shared_ptr<Trap> t) {
     damage(t->getDamagePower());
 }
-void GameObject::Princess::doCollide(Wall* w) {
+void GameObject::Princess::doCollide(std::shared_ptr<Wall> w) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Princess::doCollide(Medkit* m) {
+void GameObject::Princess::doCollide(std::shared_ptr<Medkit> m) {
     heal(m->getHP());
 }
 
@@ -175,62 +175,62 @@ void GameObject::Projectile::move() {
     lastUseMs = clock();
 }
 
-void GameObject::Projectile::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Projectile::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Hero* h) {
+void GameObject::Projectile::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Zombie* z) {
+void GameObject::Projectile::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Princess* p) {
+void GameObject::Projectile::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Projectile* p) {
+void GameObject::Projectile::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Dragon* d) {
+void GameObject::Projectile::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Trap* t) {
+void GameObject::Projectile::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Wall* w) {
+void GameObject::Projectile::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Projectile>(this));
 }
-void GameObject::Projectile::collide(Medkit* m) {
+void GameObject::Projectile::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Projectile>(this));
 }
 
-void GameObject::Projectile::doCollide(Hero* h) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Hero> h) {
     damage(h->getDamagePower());
 }
-void GameObject::Projectile::doCollide(Zombie* z) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Zombie> z) {
     damage(z->getDamagePower());
 }
-void GameObject::Projectile::doCollide(Princess* p) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Princess> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Projectile::doCollide(Projectile* p) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Projectile> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Projectile::doCollide(Dragon* d) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Dragon> d) {
     damage(d->getDamagePower());
 }
-void GameObject::Projectile::doCollide(Trap* t) {}
-void GameObject::Projectile::doCollide(Wall* w) {
+void GameObject::Projectile::doCollide(std::shared_ptr<Trap> t) {}
+void GameObject::Projectile::doCollide(std::shared_ptr<Wall> w) {
     setHP(0);
 }
-void GameObject::Projectile::doCollide(Medkit* m) {}
+void GameObject::Projectile::doCollide(std::shared_ptr<Medkit> m) {}
 
 GameObject::Hero::Hero() : Character(HP_TABLE[getSymbOnMap()],
     DMG_TABLE[getSymbOnMap()],
@@ -256,7 +256,7 @@ void GameObject::Hero::doShot() {
     doShot_ = true;
 }
 
-void GameObject::Hero::update(GameObject*& refObj) {
+void GameObject::Hero::update(std::shared_ptr<GameObject>& refObj) {
     move();
     if (doShot_) {
         refObj = shot();
@@ -264,14 +264,14 @@ void GameObject::Hero::update(GameObject*& refObj) {
     }
 }
 
-GameObject::Projectile* GameObject::Hero::shot() {
+std::shared_ptr<GameObject::Projectile> GameObject::Hero::shot() {
     auto timeNow = clock();
     if (timeNow < lastShotTime + HERO_RELOAD_TIME)
         return nullptr;
 
     lastShotTime = timeNow;
 
-    Projectile* p = new Projectile();
+    auto p = std::shared_ptr<Projectile>(new Projectile());
     
     auto dy = lastDir.first;
     auto dx = lastDir.second;
@@ -283,63 +283,63 @@ GameObject::Projectile* GameObject::Hero::shot() {
     return p;
 }
 
-void GameObject::Hero::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Hero::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Hero* h) {
+void GameObject::Hero::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Zombie* z) {
+void GameObject::Hero::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Princess* p) {
+void GameObject::Hero::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Projectile* p) {
+void GameObject::Hero::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Dragon* d) {
+void GameObject::Hero::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Trap* t) {
+void GameObject::Hero::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Wall* w) {
+void GameObject::Hero::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Hero>(this));
 }
-void GameObject::Hero::collide(Medkit* m) {
+void GameObject::Hero::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Hero>(this));
 }
 
-void GameObject::Hero::doCollide(Hero* h) {}
-void GameObject::Hero::doCollide(Zombie* z) {
+void GameObject::Hero::doCollide(std::shared_ptr<Hero> h) {}
+void GameObject::Hero::doCollide(std::shared_ptr<Zombie> z) {
     damage(z->getDamagePower());
 }
-void GameObject::Hero::doCollide(Princess* p) {
+void GameObject::Hero::doCollide(std::shared_ptr<Princess> p) {
     dmg += 1000;
 }
-void GameObject::Hero::doCollide(Projectile* p) {
+void GameObject::Hero::doCollide(std::shared_ptr<Projectile> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Hero::doCollide(Dragon* d) {
+void GameObject::Hero::doCollide(std::shared_ptr<Dragon> d) {
     damage(d->getDamagePower());
 }
-void GameObject::Hero::doCollide(Trap* t) {
+void GameObject::Hero::doCollide(std::shared_ptr<Trap> t) {
     damage(t->getDamagePower());
 }
-void GameObject::Hero::doCollide(Wall* w) {
+void GameObject::Hero::doCollide(std::shared_ptr<Wall> w) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Hero::doCollide(Medkit* m) {
+void GameObject::Hero::doCollide(std::shared_ptr<Medkit> m) {
     heal(m->getHP());
 }
 
@@ -352,7 +352,7 @@ char GameObject::Dragon::getSymbOnMap() {
     return 'D';
 }
 
-void GameObject::Dragon::update(GameObject*& refObj) {
+void GameObject::Dragon::update(std::shared_ptr<GameObject>& refObj) {
     auto dy = hero->getCoordY() - y;
     if (dy != 0) dy /= abs(dy);
 
@@ -377,14 +377,14 @@ void GameObject::Dragon::update(GameObject*& refObj) {
     move();
 }
 
-GameObject::Projectile* GameObject::Dragon::shot(const int& dy, const int& dx) {
+std::shared_ptr<GameObject::Projectile> GameObject::Dragon::shot(const int& dy, const int& dx) {
     auto timeNow = clock();
     if (timeNow < lastShotTime + DRAGON_RELOAD_TIME)
         return nullptr;
 
     lastShotTime = timeNow;
 
-    Projectile* p = new Projectile();
+    auto p = std::shared_ptr<Projectile>(new Projectile());
     p->setPos(y + dy, x + dx);
     p->dir(dy, dx);
 
@@ -398,67 +398,67 @@ void GameObject::Dragon::damage(const int& damage) {
 }
 
 
-void GameObject::Dragon::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Dragon::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Hero* h) {
+void GameObject::Dragon::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Zombie* z) {
+void GameObject::Dragon::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Princess* p) {
+void GameObject::Dragon::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Projectile* p) {
+void GameObject::Dragon::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Dragon* d) {
+void GameObject::Dragon::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Trap* t) {
+void GameObject::Dragon::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Wall* w) {
+void GameObject::Dragon::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Dragon>(this));
 }
-void GameObject::Dragon::collide(Medkit* m) {
+void GameObject::Dragon::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Dragon>(this));
 }
 
-void GameObject::Dragon::doCollide(Hero* h) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Hero> h) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Dragon::doCollide(Zombie* z) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Zombie> z) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Dragon::doCollide(Princess* p) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Princess> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Dragon::doCollide(Projectile* p) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Projectile> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Dragon::doCollide(Dragon* d) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Dragon> d) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Dragon::doCollide(Trap* t) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Trap> t) {
 }
-void GameObject::Dragon::doCollide(Wall* w) {
+void GameObject::Dragon::doCollide(std::shared_ptr<Wall> w) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Dragon::doCollide(Medkit* m) {}
+void GameObject::Dragon::doCollide(std::shared_ptr<Medkit> m) {}
 
 
 GameObject::Zombie::Zombie() : Enemy(HP_TABLE[getSymbOnMap()],
@@ -469,7 +469,7 @@ char GameObject::Zombie::getSymbOnMap() {
     return 'Z';
 }
 
-void GameObject::Zombie::update(GameObject*& refObj) {
+void GameObject::Zombie::update(std::shared_ptr<GameObject>& refObj) {
     auto dy = hero->getCoordY() - y;
     if (dy != 0) dy /= abs(dy);
 
@@ -497,68 +497,68 @@ void GameObject::Zombie::damage(const int& damage) {
         hero->incScore(1);
 }
 
-void GameObject::Zombie::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Zombie::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Hero* h) {
+void GameObject::Zombie::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Zombie* z) {
+void GameObject::Zombie::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Princess* p) {
+void GameObject::Zombie::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Projectile* p) {
+void GameObject::Zombie::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Dragon* d) {
+void GameObject::Zombie::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Trap* t) {
+void GameObject::Zombie::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Wall* w) {
+void GameObject::Zombie::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Zombie>(this));
 }
-void GameObject::Zombie::collide(Medkit* m) {
+void GameObject::Zombie::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Zombie>(this));
 }
 
-void GameObject::Zombie::doCollide(Hero* h) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Hero> h) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Zombie::doCollide(Zombie* z) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Zombie> z) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Zombie::doCollide(Princess* p) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Princess> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Zombie::doCollide(Projectile* p) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Projectile> p) {
     damage(p->getDamagePower());
 }
-void GameObject::Zombie::doCollide(Dragon* d) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Dragon> d) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Zombie::doCollide(Trap* t) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Trap> t) {
     damage(t->getDamagePower());
 }
-void GameObject::Zombie::doCollide(Wall* w) {
+void GameObject::Zombie::doCollide(std::shared_ptr<Wall> w) {
     y -= lastDir.first;
     x -= lastDir.second;
 }
-void GameObject::Zombie::doCollide(Medkit* m) {}
+void GameObject::Zombie::doCollide(std::shared_ptr<Medkit> m) {}
 
 
 GameObject::Trap::Trap() : Enemy(HP_TABLE[getSymbOnMap()],
@@ -569,55 +569,55 @@ char GameObject::Trap::getSymbOnMap() {
     return 'T';
 }
 
-void GameObject::Trap::collide(GameObject* obj) {
-    obj->collide(this);
+void GameObject::Trap::collide(std::shared_ptr<GameObject> obj) {
+    obj->collide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Hero* h) {
+void GameObject::Trap::collide(std::shared_ptr<Hero> h) {
     doCollide(h);
-    h->doCollide(this);
+    h->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Zombie* z) {
+void GameObject::Trap::collide(std::shared_ptr<Zombie> z) {
     doCollide(z);
-    z->doCollide(this);
+    z->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Princess* p) {
+void GameObject::Trap::collide(std::shared_ptr<Princess> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Projectile* p) {
+void GameObject::Trap::collide(std::shared_ptr<Projectile> p) {
     doCollide(p);
-    p->doCollide(this);
+    p->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Dragon* d) {
+void GameObject::Trap::collide(std::shared_ptr<Dragon> d) {
     doCollide(d);
-    d->doCollide(this);
+    d->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Trap* t) {
+void GameObject::Trap::collide(std::shared_ptr<Trap> t) {
     doCollide(t);
-    t->doCollide(this);
+    t->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Wall* w) {
+void GameObject::Trap::collide(std::shared_ptr<Wall> w) {
     doCollide(w);
-    w->doCollide(this);
+    w->doCollide(std::shared_ptr<Trap>(this));
 }
-void GameObject::Trap::collide(Medkit* m) {
+void GameObject::Trap::collide(std::shared_ptr<Medkit> m) {
     doCollide(m);
-    m->doCollide(this);
+    m->doCollide(std::shared_ptr<Trap>(this));
 }
 
-void GameObject::Trap::doCollide(Hero* h) {
+void GameObject::Trap::doCollide(std::shared_ptr<Hero> h) {
     damage(h->getDamagePower());
 }
-void GameObject::Trap::doCollide(Zombie* z) {
+void GameObject::Trap::doCollide(std::shared_ptr<Zombie> z) {
     damage(z->getDamagePower());
 }
-void GameObject::Trap::doCollide(Princess* p) {
+void GameObject::Trap::doCollide(std::shared_ptr<Princess> p) {
     setHP(0);
 }
-void GameObject::Trap::doCollide(Projectile* p) {}
-void GameObject::Trap::doCollide(Dragon* d) {
+void GameObject::Trap::doCollide(std::shared_ptr<Projectile> p) {}
+void GameObject::Trap::doCollide(std::shared_ptr<Dragon> d) {
     damage(d->getDamagePower());
 }
-void GameObject::Trap::doCollide(Trap* t) {}
-void GameObject::Trap::doCollide(Wall* w) {}
-void GameObject::Trap::doCollide(Medkit* m) {}
+void GameObject::Trap::doCollide(std::shared_ptr<Trap> t) {}
+void GameObject::Trap::doCollide(std::shared_ptr<Wall> w) {}
+void GameObject::Trap::doCollide(std::shared_ptr<Medkit> m) {}
